@@ -1,4 +1,5 @@
 import styles from './App.module.css';
+import Sidebar from './components/Sidebar';
 
 const sections = [
   { id: 'session', title: 'Session' },
@@ -12,6 +13,7 @@ const sections = [
 function App() {
   return (
     <div className={styles.layout}>
+      <Sidebar sections={sections} />
       <main className={styles.main}>
         <div className={styles.header}>
           <h1>Tmux Tutorial</h1>
