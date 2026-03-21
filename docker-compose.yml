@@ -1,0 +1,6 @@
+services:
+  tmux-tutorial:
+    build: .
+    ports:
+      - "9997:80"
+    restart: unless-stopped
