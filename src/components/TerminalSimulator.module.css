@@ -1,0 +1,124 @@
+.terminal {
+  background-color: var(--bg-terminal);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 20px 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #161b22;
+  border-bottom: 1px solid var(--border);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dotRed { background: #ff5f56; }
+.dotYellow { background: #ffbd2e; }
+.dotGreen { background: #27c93f; }
+
+.titleText {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
+
+.body {
+  padding: 16px;
+  min-height: 200px;
+  position: relative;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  background-color: var(--bg-secondary);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background-color: rgba(0, 255, 65, 0.1);
+  border-color: var(--accent);
+}
+
+.btnActive {
+  background-color: rgba(0, 255, 65, 0.15);
+  border-color: var(--accent);
+}
+
+.display {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.paneContainer {
+  display: flex;
+  height: 180px;
+  transition: all 0.3s ease;
+}
+
+.paneContainerVertical {
+  flex-direction: column;
+}
+
+.pane {
+  flex: 1;
+  padding: 10px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.paneActive {
+  border-color: var(--accent);
+  background-color: rgba(0, 255, 65, 0.05);
+}
+
+.output {
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.prompt {
+  color: var(--accent);
+}
+
+.statusBar {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background-color: var(--accent-dim);
+  color: #000;
+  font-size: 0.75rem;
+  margin-top: 8px;
+  border-radius: 0 0 4px 4px;
+}
