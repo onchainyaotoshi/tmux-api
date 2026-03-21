@@ -1,5 +1,11 @@
-import styles from './App.module.css';
 import Sidebar from './components/Sidebar';
+import SessionSection from './sections/SessionSection';
+import WindowSection from './sections/WindowSection';
+import PaneSection from './sections/PaneSection';
+import NavigationSection from './sections/NavigationSection';
+import ResizeSection from './sections/ResizeSection';
+import CopyModeSection from './sections/CopyModeSection';
+import styles from './App.module.css';
 
 const sections = [
   { id: 'session', title: 'Session' },
@@ -19,7 +25,12 @@ function App() {
           <h1>Tmux Tutorial</h1>
           <p>Panduan visual interaktif untuk menguasai tmux</p>
         </div>
-        <p>Sections coming soon...</p>
+        <SessionSection />
+        <WindowSection />
+        <PaneSection />
+        <NavigationSection />
+        <ResizeSection />
+        <CopyModeSection />
       </main>
     </div>
   );
