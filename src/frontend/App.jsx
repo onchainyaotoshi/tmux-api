@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import Sidebar from './components/Sidebar.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import HomePage from './pages/HomePage.jsx'
@@ -16,7 +16,7 @@ function App() {
         element={
           <SidebarProvider>
             <Sidebar />
-            <SidebarInset>
+            <div className="flex min-h-svh flex-1 flex-col">
               <header className="flex h-12 items-center gap-2 border-b px-4 md:hidden">
                 <SidebarTrigger />
               </header>
@@ -35,7 +35,7 @@ function App() {
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
-            </SidebarInset>
+            </div>
           </SidebarProvider>
         }
       />
