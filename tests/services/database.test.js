@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { DatabaseService } from '../../src/server/services/database.js'
 import { existsSync, unlinkSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
@@ -17,6 +17,7 @@ afterAll(() => {
   db.close()
   if (existsSync(TEST_DB_PATH)) unlinkSync(TEST_DB_PATH)
 })
+
 
 describe('DatabaseService', () => {
   describe('init', () => {
@@ -155,6 +156,92 @@ describe('DatabaseService', () => {
     it('should return undefined for no events', () => {
       const last = db.getLastEvent('no-events-session')
       expect(last).toBeUndefined()
+    })
+  })
+
+  describe('agents', () => {
+    afterEach(() => {
+      db.db.exec('DELETE FROM session_events')
+      db.db.exec('DELETE FROM sessions')
+      db.db.exec('DELETE FROM agents')
+    })
+
+    it('should create and get agent with env JSON parsing', () => {
+      const agent = db.createAgent({
+        id: 'agent-1',
+        name: 'claude-agent',
+        command: 'claude',
+        cwd: '/home/claude/project',
+        description: 'A Claude agent',
+        env: { ANTHROPIC_API_KEY: 'sk-test', NODE_ENV: 'production' },
+      })
+      expect(agent.id).toBe('agent-1')
+      expect(agent.name).toBe('claude-agent')
+      expect(agent.command).toBe('claude')
+      expect(agent.cwd).toBe('/home/claude/project')
+      expect(agent.description).toBe('A Claude agent')
+      expect(agent.env).toEqual({ ANTHROPIC_API_KEY: 'sk-test', NODE_ENV: 'production' })
+      expect(agent.created_at).toBeDefined()
+      expect(agent.updated_at).toBeDefined()
+    })
+
+    it('should create agent without optional fields', () => {
+      const agent = db.createAgent({
+        id: 'agent-min',
+        name: 'minimal-agent',
+        command: 'bash',
+      })
+      expect(agent.id).toBe('agent-min')
+      expect(agent.cwd).toBeNull()
+      expect(agent.description).toBeNull()
+      expect(agent.env).toBeNull()
+    })
+
+    it('should list agents', () => {
+      db.createAgent({ id: 'agent-a', name: 'agent-a', command: 'claude' })
+      db.createAgent({ id: 'agent-b', name: 'agent-b', command: 'bash' })
+      const agents = db.listAgents()
+      expect(agents.length).toBeGreaterThanOrEqual(2)
+      expect(agents.some(a => a.id === 'agent-a')).toBe(true)
+      expect(agents.some(a => a.id === 'agent-b')).toBe(true)
+    })
+
+    it('should update agent fields', () => {
+      db.createAgent({ id: 'agent-upd', name: 'upd-agent', command: 'claude' })
+      const updated = db.updateAgent('agent-upd', {
+        name: 'updated-agent',
+        description: 'now with description',
+        env: { FOO: 'bar' },
+      })
+      expect(updated.name).toBe('updated-agent')
+      expect(updated.description).toBe('now with description')
+      expect(updated.env).toEqual({ FOO: 'bar' })
+    })
+
+    it('should delete agent', () => {
+      db.createAgent({ id: 'agent-del', name: 'del-agent', command: 'claude' })
+      db.deleteAgent('agent-del')
+      const agent = db.getAgent('agent-del')
+      expect(agent).toBeUndefined()
+    })
+
+    it('should count active sessions by agent', () => {
+      db.createAgent({ id: 'agent-cnt', name: 'cnt-agent', command: 'claude' })
+      db.createSession({ id: 'sess-a1', name: 'sess-a1', command: 'claude', status: 'running', agent_id: 'agent-cnt' })
+      db.createSession({ id: 'sess-a2', name: 'sess-a2', command: 'claude', status: 'idle', agent_id: 'agent-cnt' })
+      db.createSession({ id: 'sess-a3', name: 'sess-a3', command: 'claude', status: 'stopped', agent_id: 'agent-cnt' })
+      const count = db.countActiveSessionsByAgent('agent-cnt')
+      expect(count).toBe(2)
+    })
+
+    it('should list sessions by agent', () => {
+      db.createAgent({ id: 'agent-lst', name: 'lst-agent', command: 'claude' })
+      db.createSession({ id: 'sess-b1', name: 'sess-b1', command: 'claude', agent_id: 'agent-lst' })
+      db.createSession({ id: 'sess-b2', name: 'sess-b2', command: 'claude', agent_id: 'agent-lst' })
+      db.createSession({ id: 'sess-b3', name: 'sess-b3', command: 'claude' })
+      const sessions = db.listSessionsByAgent('agent-lst')
+      expect(sessions).toHaveLength(2)
+      expect(sessions.every(s => s.agent_id === 'agent-lst')).toBe(true)
     })
   })
 })

@@ -50,14 +50,29 @@ export class DatabaseService {
         created_at TEXT NOT NULL
       )
     `)
+
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS agents (
+        id TEXT PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        command TEXT NOT NULL,
+        cwd TEXT,
+        description TEXT,
+        env TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `)
+
+    try { this.db.exec('ALTER TABLE sessions ADD COLUMN agent_id TEXT REFERENCES agents(id)') } catch {}
   }
 
-  createSession({ id, name, command, status = 'idle', cwd = null, event_token = null }) {
+  createSession({ id, name, command, status = 'idle', cwd = null, event_token = null, agent_id = null }) {
     const now = new Date().toISOString()
     this.db.prepare(`
-      INSERT INTO sessions (id, name, command, status, cwd, event_token, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, name, command, status, cwd, event_token, now, now)
+      INSERT INTO sessions (id, name, command, status, cwd, event_token, agent_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name, command, status, cwd, event_token, agent_id, now, now)
     return this.getSession(id)
   }
 
@@ -116,6 +131,63 @@ export class DatabaseService {
       if (row.data) row.data = JSON.parse(row.data)
       return row
     })
+  }
+
+  createAgent({ id, name, command, cwd = null, description = null, env = null }) {
+    const now = new Date().toISOString()
+    const envStr = env ? JSON.stringify(env) : null
+    this.db.prepare(`
+      INSERT INTO agents (id, name, command, cwd, description, env, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name, command, cwd, description, envStr, now, now)
+    return this.getAgent(id)
+  }
+
+  getAgent(id) {
+    const row = this.db.prepare('SELECT * FROM agents WHERE id = ?').get(id)
+    if (row && row.env) row.env = JSON.parse(row.env)
+    return row
+  }
+
+  listAgents() {
+    const rows = this.db.prepare('SELECT * FROM agents').all()
+    return rows.map(row => {
+      if (row.env) row.env = JSON.parse(row.env)
+      return row
+    })
+  }
+
+  updateAgent(id, fields) {
+    const allowed = ['name', 'command', 'cwd', 'description', 'env']
+    const updates = []
+    const values = []
+    for (const key of allowed) {
+      if (key in fields) {
+        updates.push(`${key} = ?`)
+        values.push(key === 'env' && fields[key] != null ? JSON.stringify(fields[key]) : fields[key])
+      }
+    }
+    if (updates.length === 0) return this.getAgent(id)
+    const now = new Date().toISOString()
+    updates.push('updated_at = ?')
+    values.push(now, id)
+    this.db.prepare(`UPDATE agents SET ${updates.join(', ')} WHERE id = ?`).run(...values)
+    return this.getAgent(id)
+  }
+
+  deleteAgent(id) {
+    this.db.prepare('DELETE FROM agents WHERE id = ?').run(id)
+  }
+
+  countActiveSessionsByAgent(agentId) {
+    const row = this.db.prepare(
+      "SELECT COUNT(*) as count FROM sessions WHERE agent_id = ? AND status != 'stopped'"
+    ).get(agentId)
+    return row.count
+  }
+
+  listSessionsByAgent(agentId) {
+    return this.db.prepare('SELECT * FROM sessions WHERE agent_id = ?').all(agentId)
   }
 
   close() {
