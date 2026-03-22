@@ -73,7 +73,7 @@ describe('authPlugin — Bearer token', () => {
       headers: { authorization: 'Bearer valid-token' },
     })
     expect(res.statusCode).toBe(200)
-    expect(global.fetch).toHaveBeenCalledWith('http://accounts.test/me', {
+    expect(global.fetch).toHaveBeenCalledWith('http://accounts.test/api/proxy/me', {
       headers: { authorization: 'Bearer valid-token' },
     })
   })

@@ -15,7 +15,7 @@ async function auth(fastify, opts) {
     const authHeader = request.headers.authorization
     if (authHeader && authHeader.startsWith('Bearer ') && authAccountsUrl) {
       try {
-        const res = await fetch(`${authAccountsUrl}/me`, {
+        const res = await fetch(`${authAccountsUrl}/api/proxy/me`, {
           headers: { authorization: authHeader },
         })
         if (res.ok) return
