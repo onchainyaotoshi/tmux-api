@@ -1,10 +1,10 @@
 export async function healthRoutes(fastify) {
-  const { workerService } = fastify
+  const { sessionService } = fastify
 
-  fastify.get('/health/workers', {
+  fastify.get('/health/sessions', {
     schema: {
-      tags: ['Health'],
-      summary: 'Health check all workers',
+      tags: ['L2 — Session'],
+      summary: 'Health check all sessions',
       response: {
         200: {
           type: 'object',
@@ -28,7 +28,7 @@ export async function healthRoutes(fastify) {
       },
     },
   }, async () => {
-    const data = await workerService.checkAllHealth()
+    const data = await sessionService.checkAllHealth()
     return { success: true, data }
   })
 }

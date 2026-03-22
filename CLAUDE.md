@@ -16,17 +16,32 @@ Foreman is a REST API server for controlling tmux remotely. It enables orchestra
 - **Container:** Docker multi-stage (node:20-alpine + tmux)
 - **Port:** 9993 (localhost only, expose via cloudflared)
 
+## Layer Architecture
+
+Foreman uses a 4-layer service architecture:
+
+| Layer | Service | Route | Status |
+|-------|---------|-------|--------|
+| L1 | `TerminalService` | `/api/terminals` | Active — raw tmux primitives |
+| L2 | `SessionService` | `/api/sessions` | Active — managed running instances |
+| L3 | `AgentService` | `/api/agents` | Planned — blueprints + lifecycle |
+| L4 | `OrchestratorService` | `/api/orchestrator` | Planned — fleet management |
+
+See `docs/architecture.md` for full architecture details.
+
 ## Project Structure
 
 ```
 src/server/              — Backend (Fastify)
   index.js               — Entry point, wires plugins + routes
-  services/tmux.js       — TmuxService class (core, wraps tmux binary)
+  services/terminal.js   — TerminalService class (core, wraps tmux binary)
+  services/session.js    — SessionService class (manages running instances)
   plugins/auth.js        — Dual auth: API key + Bearer token validation
   plugins/swagger.js     — Swagger UI at /docs
-  routes/sessions.js     — Session CRUD
-  routes/windows.js      — Window CRUD (nested under sessions)
-  routes/panes.js        — Pane CRUD + send-keys + capture
+  routes/terminals.js    — Terminal CRUD (L1)
+  routes/sessions.js     — Session CRUD (L2)
+  routes/windows.js      — Window CRUD (nested under terminals)
+  routes/panes.js        — Pane CRUD + send-keys + capture (nested under terminals)
   routes/authProxy.js    — Proxies /auth/proxy/* to accounts service
 
 src/frontend/            — Frontend (React SPA)
@@ -50,9 +65,10 @@ src/frontend/            — Frontend (React SPA)
 src/index.css            — Tailwind directives + shadcn dark theme CSS vars
 
 tests/                   — Mirrors src/server/ structure
-  services/tmux.test.js
+  services/terminal.test.js
+  services/session.test.js
   plugins/auth.test.js
-  routes/{sessions,windows,panes}.test.js
+  routes/{terminals,sessions,windows,panes}.test.js
 ```
 
 ## Commands
@@ -69,7 +85,7 @@ npm run test:watch    # Watch mode
 ## Key Architecture Decisions
 
 ### Security
-- **execFile, not exec** — TmuxService uses `child_process.execFile` with argument arrays. Never interpolate user input into shell commands.
+- **execFile, not exec** — TerminalService uses `child_process.execFile` with argument arrays. Never interpolate user input into shell commands.
 - **ALLOWED_SUBCOMMANDS whitelist** — Only 14 tmux subcommands are permitted.
 - **Name validation** — Session/window names must match `^[a-zA-Z0-9_-]+$` (enforced at route schema level) to prevent tmux target syntax injection.
 - **send-keys maxLength** — Limited to 4096 chars to prevent resource exhaustion.
@@ -80,7 +96,8 @@ npm run test:watch    # Watch mode
 ### Patterns
 - **Route schemas** — Every route has JSON Schema for request validation AND Swagger auto-generation. If you add a route, always include schema.
 - **Response envelope** — Always return `{ success: true, data: ... }` or `{ success: false, error: "..." }`.
-- **TmuxService is stateless** — One instance decorated on Fastify app as `fastify.tmux`. Routes access it via `const { tmux } = fastify`.
+- **TerminalService is stateless** — One instance decorated on Fastify app as `fastify.terminal`. Routes access it via `const { terminal } = fastify`.
+- **SessionService** — Decorated on Fastify app as `fastify.sessionService`. Manages L2 session lifecycle on top of TerminalService.
 - **Output parsing** — Tmux `-F` flag with `|` delimiter. Never parse free-text output.
 - **fastify-plugin** — Auth and swagger plugins use `fp()` wrapper for global scope (not scoped to registering plugin).
 
@@ -133,7 +150,7 @@ Tests are **integration tests** that run real tmux commands. They create/destroy
 
 ```bash
 # Run specific test file
-npx vitest run tests/services/tmux.test.js
+npx vitest run tests/services/terminal.test.js
 
 # Run all tests
 npm test
@@ -149,7 +166,7 @@ npm test
 
 1. Branch from `develop`: `git checkout -b feature/name`
 2. Add route in `src/server/routes/`
-3. Add method in `src/server/services/tmux.js` if new tmux command needed
+3. Add method in `src/server/services/terminal.js` (L1) or `src/server/services/session.js` (L2) as appropriate
 4. Add subcommand to `ALLOWED_SUBCOMMANDS` if new
 5. Write tests in `tests/routes/`
 6. Run `npm test` — all must pass
@@ -159,9 +176,11 @@ npm test
 
 ## Future Direction
 
-Foreman is evolving from a tmux API into an **AI workforce manager**:
-- `/api/workers` layer abstracting session/window/pane into worker concept
-- Agent that monitors all Claude workers automatically
-- Auto-recovery when sessions die
-- Task distribution across multiple agents
-- Status dashboard for all running agents
+Foreman is evolving from a tmux API into an **AI workforce manager** using a 4-layer architecture:
+
+- **L1 TerminalService** (`/api/terminals`) — Active. Raw tmux primitives (create, kill, capture, send-keys).
+- **L2 SessionService** (`/api/sessions`) — Active. Managed running instances with state tracking, events, and DB persistence.
+- **L3 AgentService** (`/api/agents`) — Planned. Agent blueprints, lifecycle management, auto-recovery when sessions die.
+- **L4 OrchestratorService** (`/api/orchestrator`) — Planned. Fleet management, task distribution across multiple agents, status dashboard.
+
+See `docs/architecture.md` for the full architecture design.

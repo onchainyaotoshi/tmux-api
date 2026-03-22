@@ -20,117 +20,117 @@ afterAll(() => {
 
 describe('DatabaseService', () => {
   describe('init', () => {
-    it('should create workers table', () => {
+    it('should create sessions table', () => {
       const tables = db.db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='workers'"
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='sessions'"
       ).all()
       expect(tables).toHaveLength(1)
     })
   })
 
-  describe('createWorker', () => {
-    it('should insert a worker and return it', () => {
-      const worker = db.createWorker({
+  describe('createSession', () => {
+    it('should insert a session and return it', () => {
+      const session = db.createSession({
         id: 'test-id-1',
-        name: 'test-worker',
+        name: 'test-session',
         command: 'claude',
         status: 'idle',
       })
-      expect(worker.id).toBe('test-id-1')
-      expect(worker.name).toBe('test-worker')
-      expect(worker.command).toBe('claude')
-      expect(worker.status).toBe('idle')
-      expect(worker.created_at).toBeDefined()
-      expect(worker.updated_at).toBeDefined()
+      expect(session.id).toBe('test-id-1')
+      expect(session.name).toBe('test-session')
+      expect(session.command).toBe('claude')
+      expect(session.status).toBe('idle')
+      expect(session.created_at).toBeDefined()
+      expect(session.updated_at).toBeDefined()
     })
 
     it('should reject duplicate names', () => {
-      expect(() => db.createWorker({
+      expect(() => db.createSession({
         id: 'test-id-dup',
-        name: 'test-worker',
+        name: 'test-session',
         command: 'claude',
         status: 'idle',
       })).toThrow()
     })
   })
 
-  describe('getWorker', () => {
-    it('should return worker by id', () => {
-      const worker = db.getWorker('test-id-1')
-      expect(worker.name).toBe('test-worker')
+  describe('getSession', () => {
+    it('should return session by id', () => {
+      const session = db.getSession('test-id-1')
+      expect(session.name).toBe('test-session')
     })
 
     it('should return undefined for unknown id', () => {
-      const worker = db.getWorker('nonexistent')
-      expect(worker).toBeUndefined()
+      const session = db.getSession('nonexistent')
+      expect(session).toBeUndefined()
     })
   })
 
-  describe('listWorkers', () => {
-    it('should return all workers', () => {
-      const workers = db.listWorkers()
-      expect(workers.length).toBeGreaterThanOrEqual(1)
+  describe('listSessions', () => {
+    it('should return all sessions', () => {
+      const sessions = db.listSessions()
+      expect(sessions.length).toBeGreaterThanOrEqual(1)
     })
 
     it('should filter by status', () => {
-      const workers = db.listWorkers('idle')
-      expect(workers.every(w => w.status === 'idle')).toBe(true)
+      const sessions = db.listSessions('idle')
+      expect(sessions.every(s => s.status === 'idle')).toBe(true)
     })
   })
 
   describe('updateStatus', () => {
-    it('should update worker status', () => {
+    it('should update session status', () => {
       db.updateStatus('test-id-1', 'running')
-      const worker = db.getWorker('test-id-1')
-      expect(worker.status).toBe('running')
+      const session = db.getSession('test-id-1')
+      expect(session.status).toBe('running')
     })
   })
 
   describe('updateTask', () => {
     it('should update current_task and set status to running', () => {
       db.updateTask('test-id-1', 'do something')
-      const worker = db.getWorker('test-id-1')
-      expect(worker.current_task).toBe('do something')
-      expect(worker.status).toBe('running')
+      const session = db.getSession('test-id-1')
+      expect(session.current_task).toBe('do something')
+      expect(session.status).toBe('running')
     })
   })
 
   describe('updateStatus to stopped', () => {
-    it('should mark worker as stopped', () => {
+    it('should mark session as stopped', () => {
       db.updateStatus('test-id-1', 'stopped')
-      const worker = db.getWorker('test-id-1')
-      expect(worker.status).toBe('stopped')
+      const session = db.getSession('test-id-1')
+      expect(session.status).toBe('stopped')
     })
   })
 
   describe('cwd and event_token columns', () => {
     it('should store cwd and event_token', () => {
-      const worker = db.createWorker({
+      const session = db.createSession({
         id: 'cwd-test-id',
-        name: 'cwd-worker',
+        name: 'cwd-session',
         command: 'claude',
         cwd: '/home/claude/project',
         event_token: 'token-123',
       })
-      expect(worker.cwd).toBe('/home/claude/project')
-      expect(worker.event_token).toBe('token-123')
+      expect(session.cwd).toBe('/home/claude/project')
+      expect(session.event_token).toBe('token-123')
     })
 
     it('should allow null cwd', () => {
-      const worker = db.createWorker({
+      const session = db.createSession({
         id: 'no-cwd-id',
-        name: 'no-cwd-worker',
+        name: 'no-cwd-session',
         command: 'bash',
       })
-      expect(worker.cwd).toBeNull()
+      expect(session.cwd).toBeNull()
     })
   })
 
-  describe('worker_events', () => {
+  describe('session_events', () => {
     it('should create event', () => {
       const event = db.createEvent({
         id: 'evt-1',
-        worker_id: 'test-id-1',
+        session_id: 'test-id-1',
         type: 'notification',
         data: { message: 'test' },
       })
@@ -140,7 +140,7 @@ describe('DatabaseService', () => {
     })
 
     it('should get last event', () => {
-      db.createEvent({ id: 'evt-2', worker_id: 'test-id-1', type: 'stop', data: null })
+      db.createEvent({ id: 'evt-2', session_id: 'test-id-1', type: 'stop', data: null })
       const last = db.getLastEvent('test-id-1')
       expect(last.id).toBe('evt-2')
       expect(last.type).toBe('stop')
@@ -153,7 +153,7 @@ describe('DatabaseService', () => {
     })
 
     it('should return undefined for no events', () => {
-      const last = db.getLastEvent('no-events-worker')
+      const last = db.getLastEvent('no-events-session')
       expect(last).toBeUndefined()
     })
   })

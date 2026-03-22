@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import Fastify from 'fastify'
 import { authPlugin } from '../../src/server/plugins/auth.js'
 import { eventRoutes } from '../../src/server/routes/events.js'
-import { TmuxService } from '../../src/server/services/tmux.js'
-import { WorkerService } from '../../src/server/services/worker.js'
+import { TerminalService } from '../../src/server/services/terminal.js'
+import { SessionService } from '../../src/server/services/session.js'
 import { DatabaseService } from '../../src/server/services/database.js'
 import { existsSync, unlinkSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
@@ -11,32 +11,32 @@ import { join } from 'node:path'
 const API_KEY = 'test-key'
 const headers = { 'x-api-key': API_KEY }
 const TEST_DB = join(process.cwd(), 'data', 'test-routes-events.db')
-const WORKER_PREFIX = 'worker-'
+const SESSION_PREFIX = 'session-'
 
-let app, tmux, db, workerService
+let app, terminal, db, sessionService
 
 beforeAll(async () => {
   mkdirSync(join(process.cwd(), 'data'), { recursive: true })
-  tmux = new TmuxService()
+  terminal = new TerminalService()
   db = new DatabaseService(TEST_DB)
   db.init()
-  workerService = new WorkerService(tmux, db)
+  sessionService = new SessionService(terminal, db)
 
   app = Fastify()
-  app.decorate('tmux', tmux)
+  app.decorate('terminal', terminal)
   app.decorate('db', db)
-  app.decorate('workerService', workerService)
+  app.decorate('sessionService', sessionService)
   await app.register(authPlugin, { apiKey: API_KEY })
   await app.register(eventRoutes, { prefix: '/api' })
 })
 
 afterEach(async () => {
-  const workers = db.listWorkers()
-  for (const w of workers) {
-    try { await tmux.killSession(`${WORKER_PREFIX}${w.name}`) } catch {}
+  const sessions = db.listSessions()
+  for (const s of sessions) {
+    try { await terminal.killSession(`${SESSION_PREFIX}${s.name}`) } catch {}
   }
-  db.db.exec('DELETE FROM worker_events')
-  db.db.exec('DELETE FROM workers')
+  db.db.exec('DELETE FROM session_events')
+  db.db.exec('DELETE FROM sessions')
 })
 
 afterAll(async () => {
@@ -45,12 +45,12 @@ afterAll(async () => {
   await app.close()
 })
 
-describe('POST /api/workers/:id/events', () => {
+describe('POST /api/sessions/:id/events', () => {
   it('should accept event with valid token', async () => {
-    const worker = await workerService.spawn('evt-test', 'bash')
+    const session = await sessionService.spawn('evt-test', 'bash')
     const res = await app.inject({
       method: 'POST',
-      url: `/api/workers/${worker.id}/events?token=${worker.event_token}`,
+      url: `/api/sessions/${session.id}/events?token=${session.event_token}`,
       payload: { type: 'notification', data: { message: 'test' } },
     })
     expect(res.statusCode).toBe(201)
@@ -59,50 +59,50 @@ describe('POST /api/workers/:id/events', () => {
   })
 
   it('should reject invalid token with 403', async () => {
-    const worker = await workerService.spawn('evt-bad-token', 'bash')
+    const session = await sessionService.spawn('evt-bad-token', 'bash')
     const res = await app.inject({
       method: 'POST',
-      url: `/api/workers/${worker.id}/events?token=wrong`,
+      url: `/api/sessions/${session.id}/events?token=wrong`,
       payload: { type: 'stop' },
     })
     expect(res.statusCode).toBe(403)
   })
 
   it('should reject missing token with 403', async () => {
-    const worker = await workerService.spawn('evt-no-token', 'bash')
+    const session = await sessionService.spawn('evt-no-token', 'bash')
     const res = await app.inject({
       method: 'POST',
-      url: `/api/workers/${worker.id}/events`,
+      url: `/api/sessions/${session.id}/events`,
       payload: { type: 'stop' },
     })
     expect(res.statusCode).toBe(403)
   })
 
-  it('should 404 for unknown worker', async () => {
+  it('should 404 for unknown session', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/api/workers/nonexistent/events?token=anything',
+      url: '/api/sessions/nonexistent/events?token=anything',
       payload: { type: 'stop' },
     })
     expect(res.statusCode).toBe(404)
   })
 
-  it('should update worker status from event type', async () => {
-    const worker = await workerService.spawn('evt-status', 'bash')
+  it('should update session status from event type', async () => {
+    const session = await sessionService.spawn('evt-status', 'bash')
     await app.inject({
       method: 'POST',
-      url: `/api/workers/${worker.id}/events?token=${worker.event_token}`,
+      url: `/api/sessions/${session.id}/events?token=${session.event_token}`,
       payload: { type: 'notification', data: { notification_type: 'permission_prompt' } },
     })
-    const updated = db.getWorker(worker.id)
+    const updated = db.getSession(session.id)
     expect(updated.status).toBe('waiting_input')
   })
 
   it('should normalize hook_event_name to type', async () => {
-    const worker = await workerService.spawn('evt-hook', 'bash')
+    const session = await sessionService.spawn('evt-hook', 'bash')
     const res = await app.inject({
       method: 'POST',
-      url: `/api/workers/${worker.id}/events?token=${worker.event_token}`,
+      url: `/api/sessions/${session.id}/events?token=${session.event_token}`,
       payload: { hook_event_name: 'StopFailure', session_id: 'abc' },
     })
     expect(res.statusCode).toBe(201)
@@ -110,10 +110,10 @@ describe('POST /api/workers/:id/events', () => {
   })
 
   it('should not require auth header (token-based)', async () => {
-    const worker = await workerService.spawn('evt-noauth', 'bash')
+    const session = await sessionService.spawn('evt-noauth', 'bash')
     const res = await app.inject({
       method: 'POST',
-      url: `/api/workers/${worker.id}/events?token=${worker.event_token}`,
+      url: `/api/sessions/${session.id}/events?token=${session.event_token}`,
       payload: { type: 'stop' },
       // No x-api-key header
     })
@@ -121,25 +121,25 @@ describe('POST /api/workers/:id/events', () => {
   })
 })
 
-describe('GET /api/workers/:id/events', () => {
+describe('GET /api/sessions/:id/events', () => {
   it('should require auth', async () => {
-    const worker = await workerService.spawn('evt-list-auth', 'bash')
+    const session = await sessionService.spawn('evt-list-auth', 'bash')
     const res = await app.inject({
       method: 'GET',
-      url: `/api/workers/${worker.id}/events`,
+      url: `/api/sessions/${session.id}/events`,
     })
     expect(res.statusCode).toBe(401)
   })
 
   it('should return events newest first', async () => {
-    const worker = await workerService.spawn('evt-list', 'bash')
-    await workerService.processEvent(worker.id, 'tool_use', {})
-    await workerService.processEvent(worker.id, 'notification', { message: 'confirm?' })
-    await workerService.processEvent(worker.id, 'stop', {})
+    const session = await sessionService.spawn('evt-list', 'bash')
+    await sessionService.processEvent(session.id, 'tool_use', {})
+    await sessionService.processEvent(session.id, 'notification', { message: 'confirm?' })
+    await sessionService.processEvent(session.id, 'stop', {})
 
     const res = await app.inject({
       method: 'GET',
-      url: `/api/workers/${worker.id}/events`,
+      url: `/api/sessions/${session.id}/events`,
       headers,
     })
     expect(res.statusCode).toBe(200)
@@ -150,13 +150,13 @@ describe('GET /api/workers/:id/events', () => {
   })
 
   it('should respect limit param', async () => {
-    const worker = await workerService.spawn('evt-limit', 'bash')
-    await workerService.processEvent(worker.id, 'tool_use', {})
-    await workerService.processEvent(worker.id, 'stop', {})
+    const session = await sessionService.spawn('evt-limit', 'bash')
+    await sessionService.processEvent(session.id, 'tool_use', {})
+    await sessionService.processEvent(session.id, 'stop', {})
 
     const res = await app.inject({
       method: 'GET',
-      url: `/api/workers/${worker.id}/events?limit=1`,
+      url: `/api/sessions/${session.id}/events?limit=1`,
       headers,
     })
     expect(res.json().data.length).toBe(1)

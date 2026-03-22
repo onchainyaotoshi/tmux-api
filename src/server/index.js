@@ -6,16 +6,16 @@ import { dirname, join } from 'node:path'
 import { existsSync, mkdirSync } from 'node:fs'
 import 'dotenv/config'
 
-import { TmuxService } from './services/tmux.js'
+import { TerminalService } from './services/terminal.js'
 import { authPlugin } from './plugins/auth.js'
 import { swaggerSetup } from './plugins/swagger.js'
-import { sessionRoutes } from './routes/sessions.js'
+import { terminalRoutes } from './routes/terminals.js'
 import { windowRoutes } from './routes/windows.js'
 import { paneRoutes } from './routes/panes.js'
 import { authProxyRoutes } from './routes/authProxy.js'
 import { DatabaseService } from './services/database.js'
-import { WorkerService } from './services/worker.js'
-import { workerRoutes } from './routes/workers.js'
+import { SessionService } from './services/session.js'
+import { sessionRoutes } from './routes/sessions.js'
 import { healthRoutes } from './routes/health.js'
 import { eventRoutes } from './routes/events.js'
 
@@ -32,16 +32,16 @@ if (!API_KEY) {
 
 const app = Fastify({ logger: true })
 
-// Decorate with TmuxService
-app.decorate('tmux', new TmuxService())
+// Decorate with TerminalService
+app.decorate('terminal', new TerminalService())
 
-// Database + WorkerService
+// Database + SessionService
 const dataDir = join(__dirname, '../../data')
 mkdirSync(dataDir, { recursive: true })
 const db = new DatabaseService(join(dataDir, 'foreman.db'))
 db.init()
 app.decorate('db', db)
-app.decorate('workerService', new WorkerService(app.tmux, db))
+app.decorate('sessionService', new SessionService(app.terminal, db))
 
 // Graceful shutdown
 app.addHook('onClose', () => db.close())
@@ -70,10 +70,10 @@ await app.register(rateLimit, {
 })
 
 // API routes
-await app.register(sessionRoutes, { prefix: '/api' })
+await app.register(terminalRoutes, { prefix: '/api' })
 await app.register(windowRoutes, { prefix: '/api' })
 await app.register(paneRoutes, { prefix: '/api' })
-await app.register(workerRoutes, { prefix: '/api' })
+await app.register(sessionRoutes, { prefix: '/api' })
 await app.register(healthRoutes, { prefix: '/api' })
 await app.register(eventRoutes, { prefix: '/api' })
 
