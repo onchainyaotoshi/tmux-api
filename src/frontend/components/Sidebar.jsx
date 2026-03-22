@@ -38,6 +38,7 @@ export default function Sidebar({ sections }) {
       )}
       <nav className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logo}>$ tmux</div>
+        <div className={styles.groupLabel}>Tutorial</div>
         <ul className={styles.nav}>
           {sections.map(({ id, title }) => (
             <li key={id}>
@@ -50,6 +51,19 @@ export default function Sidebar({ sections }) {
               </a>
             </li>
           ))}
+        </ul>
+        <div className={styles.groupLabel}>Resources</div>
+        <ul className={styles.nav}>
+          <li>
+            <a
+              href="/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.navItem}
+            >
+              API Docs
+            </a>
+          </li>
         </ul>
       </nav>
     </>

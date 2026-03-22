@@ -22,8 +22,8 @@ function App() {
       <Sidebar sections={sections} />
       <main className={styles.main}>
         <div className={styles.header}>
-          <h1>Tmux Tutorial</h1>
-          <p>Panduan visual interaktif untuk menguasai tmux</p>
+          <h1>Tmux Management</h1>
+          <p>Panduan visual interaktif & REST API untuk menguasai tmux</p>
         </div>
         <SessionSection />
         <WindowSection />
