@@ -14,8 +14,18 @@ export class DatabaseService {
   }
 
   #migrate() {
+    // Migrate existing v0.7.0 databases
+    const hasWorkers = this.db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='workers'"
+    ).get()
+    if (hasWorkers) {
+      this.db.exec('ALTER TABLE workers RENAME TO sessions')
+      this.db.exec('ALTER TABLE worker_events RENAME TO session_events')
+      this.db.exec('ALTER TABLE session_events RENAME COLUMN worker_id TO session_id')
+    }
+
     this.db.exec(`
-      CREATE TABLE IF NOT EXISTS workers (
+      CREATE TABLE IF NOT EXISTS sessions (
         id TEXT PRIMARY KEY,
         name TEXT UNIQUE NOT NULL,
         command TEXT NOT NULL,
@@ -28,14 +38,13 @@ export class DatabaseService {
       )
     `)
 
-    // Migration for existing databases that lack new columns
-    try { this.db.exec('ALTER TABLE workers ADD COLUMN cwd TEXT') } catch {}
-    try { this.db.exec('ALTER TABLE workers ADD COLUMN event_token TEXT') } catch {}
+    try { this.db.exec('ALTER TABLE sessions ADD COLUMN cwd TEXT') } catch {}
+    try { this.db.exec('ALTER TABLE sessions ADD COLUMN event_token TEXT') } catch {}
 
     this.db.exec(`
-      CREATE TABLE IF NOT EXISTS worker_events (
+      CREATE TABLE IF NOT EXISTS session_events (
         id TEXT PRIMARY KEY,
-        worker_id TEXT NOT NULL REFERENCES workers(id),
+        session_id TEXT NOT NULL REFERENCES sessions(id),
         type TEXT NOT NULL,
         data TEXT,
         created_at TEXT NOT NULL
@@ -43,66 +52,66 @@ export class DatabaseService {
     `)
   }
 
-  createWorker({ id, name, command, status = 'idle', cwd = null, event_token = null }) {
+  createSession({ id, name, command, status = 'idle', cwd = null, event_token = null }) {
     const now = new Date().toISOString()
     this.db.prepare(`
-      INSERT INTO workers (id, name, command, status, cwd, event_token, created_at, updated_at)
+      INSERT INTO sessions (id, name, command, status, cwd, event_token, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, name, command, status, cwd, event_token, now, now)
-    return this.getWorker(id)
+    return this.getSession(id)
   }
 
-  getWorker(id) {
-    return this.db.prepare('SELECT * FROM workers WHERE id = ?').get(id)
+  getSession(id) {
+    return this.db.prepare('SELECT * FROM sessions WHERE id = ?').get(id)
   }
 
-  listWorkers(status) {
+  listSessions(status) {
     if (status) {
-      return this.db.prepare('SELECT * FROM workers WHERE status = ?').all(status)
+      return this.db.prepare('SELECT * FROM sessions WHERE status = ?').all(status)
     }
-    return this.db.prepare('SELECT * FROM workers').all()
+    return this.db.prepare('SELECT * FROM sessions').all()
   }
 
   updateStatus(id, status) {
     const now = new Date().toISOString()
-    this.db.prepare('UPDATE workers SET status = ?, updated_at = ? WHERE id = ?')
+    this.db.prepare('UPDATE sessions SET status = ?, updated_at = ? WHERE id = ?')
       .run(status, now, id)
   }
 
   updateTask(id, task) {
     const now = new Date().toISOString()
-    this.db.prepare('UPDATE workers SET current_task = ?, status = ?, updated_at = ? WHERE id = ?')
+    this.db.prepare('UPDATE sessions SET current_task = ?, status = ?, updated_at = ? WHERE id = ?')
       .run(task, 'running', now, id)
   }
 
-  createEvent({ id, worker_id, type, data }) {
+  createEvent({ id, session_id, type, data }) {
     const now = new Date().toISOString()
     const dataStr = data ? JSON.stringify(data) : null
     this.db.prepare(`
-      INSERT INTO worker_events (id, worker_id, type, data, created_at)
+      INSERT INTO session_events (id, session_id, type, data, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run(id, worker_id, type, dataStr, now)
+    `).run(id, session_id, type, dataStr, now)
     return this.getEvent(id)
   }
 
   getEvent(id) {
-    const row = this.db.prepare('SELECT * FROM worker_events WHERE id = ?').get(id)
+    const row = this.db.prepare('SELECT * FROM session_events WHERE id = ?').get(id)
     if (row && row.data) row.data = JSON.parse(row.data)
     return row
   }
 
-  getLastEvent(workerId) {
+  getLastEvent(sessionId) {
     const row = this.db.prepare(
-      'SELECT * FROM worker_events WHERE worker_id = ? ORDER BY created_at DESC LIMIT 1'
-    ).get(workerId)
+      'SELECT * FROM session_events WHERE session_id = ? ORDER BY created_at DESC LIMIT 1'
+    ).get(sessionId)
     if (row && row.data) row.data = JSON.parse(row.data)
     return row
   }
 
-  listEvents(workerId, limit = 50) {
+  listEvents(sessionId, limit = 50) {
     const rows = this.db.prepare(
-      'SELECT * FROM worker_events WHERE worker_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?'
-    ).all(workerId, limit)
+      'SELECT * FROM session_events WHERE session_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?'
+    ).all(sessionId, limit)
     return rows.map(row => {
       if (row.data) row.data = JSON.parse(row.data)
       return row
