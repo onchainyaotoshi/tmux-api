@@ -107,6 +107,22 @@
   border-color: #dc3545;
 }
 
+.loginBtn {
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+}
+
+.loginBtn:hover {
+  background: rgba(0, 255, 65, 0.1);
+}
+
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);

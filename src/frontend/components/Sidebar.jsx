@@ -5,7 +5,8 @@ import styles from './Sidebar.module.css'
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
-  const user = auth.getUser()
+  const isLoggedIn = auth.isAuthenticated()
+  const user = isLoggedIn ? auth.getUser() : null
 
   const handleClick = () => setIsOpen(false)
 
@@ -24,21 +25,24 @@ export default function Sidebar() {
       <nav className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logo}>$ foreman</div>
 
-        <div className={styles.groupLabel}>Dashboard</div>
-        <ul className={styles.nav}>
-          <li>
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
-              }
-              onClick={handleClick}
-            >
-              Sessions
-            </NavLink>
-          </li>
-        </ul>
+        {isLoggedIn && (
+          <>
+            <div className={styles.groupLabel}>Dashboard</div>
+            <ul className={styles.nav}>
+              <li>
+                <NavLink
+                  to="/sessions"
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                  }
+                  onClick={handleClick}
+                >
+                  Sessions
+                </NavLink>
+              </li>
+            </ul>
+          </>
+        )}
 
         <div className={styles.groupLabel}>Resources</div>
         <ul className={styles.nav}>
@@ -69,9 +73,15 @@ export default function Sidebar() {
           {user && (
             <div className={styles.userInfo}>{user.email}</div>
           )}
-          <button className={styles.logoutBtn} onClick={() => auth.logout()}>
-            Logout
-          </button>
+          {isLoggedIn ? (
+            <button className={styles.logoutBtn} onClick={() => auth.logout()}>
+              Logout
+            </button>
+          ) : (
+            <button className={styles.loginBtn} onClick={() => auth.login()}>
+              Login
+            </button>
+          )}
         </div>
       </nav>
     </>
