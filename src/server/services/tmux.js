@@ -7,7 +7,7 @@ const ALLOWED_SUBCOMMANDS = [
   'list-sessions', 'new-session', 'kill-session', 'rename-session',
   'list-windows', 'new-window', 'kill-window', 'rename-window',
   'list-panes', 'split-window', 'kill-pane', 'resize-pane',
-  'send-keys', 'capture-pane',
+  'send-keys', 'capture-pane', 'has-session',
 ]
 
 export class TmuxService {
@@ -53,6 +53,15 @@ export class TmuxService {
 
   async renameSession(name, newName) {
     await this.execute('rename-session', ['-t', name, newName])
+  }
+
+  async hasSession(name) {
+    try {
+      await this.execute('has-session', ['-t', name])
+      return true
+    } catch {
+      return false
+    }
   }
 
   // Windows

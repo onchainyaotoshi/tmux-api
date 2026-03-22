@@ -136,4 +136,18 @@ describe('TmuxService', () => {
       expect(typeof content).toBe('string')
     })
   })
+
+  describe('hasSession', () => {
+    it('should return true for existing session', async () => {
+      await tmux.createSession('has-session-test')
+      const result = await tmux.hasSession('has-session-test')
+      expect(result).toBe(true)
+      await tmux.killSession('has-session-test')
+    })
+
+    it('should return false for non-existing session', async () => {
+      const result = await tmux.hasSession('nonexistent-session-xyz')
+      expect(result).toBe(false)
+    })
+  })
 })
