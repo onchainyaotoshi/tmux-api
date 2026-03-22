@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge'
 import SessionSection from '../sections/SessionSection.jsx'
 import WindowSection from '../sections/WindowSection.jsx'
 import PaneSection from '../sections/PaneSection.jsx'
@@ -17,29 +18,14 @@ const sections = [
 export default function KnowledgeBasePage() {
   return (
     <>
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h2 style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', fontSize: '1.5rem', marginBottom: '8px' }}>
-          Tmux Knowledge Base
-        </h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Visual tutorial untuk orchestrasi terminal
-        </p>
+      <div className="mb-10 text-center">
+        <h2 className="mb-2 font-mono text-2xl font-bold">Tmux Knowledge Base</h2>
+        <p className="text-muted-foreground">Visual tutorial untuk orchestrasi terminal</p>
       </div>
-      <nav style={{ marginBottom: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      <nav className="mb-8 flex flex-wrap gap-2">
         {sections.map(({ id, title }) => (
-          <a
-            key={id}
-            href={`#${id}`}
-            style={{
-              color: 'var(--accent-dim)',
-              textDecoration: 'none',
-              padding: '4px 12px',
-              border: '1px solid var(--border)',
-              borderRadius: '4px',
-              fontSize: '0.85rem',
-            }}
-          >
-            {title}
+          <a key={id} href={`#${id}`}>
+            <Badge variant="outline">{title}</Badge>
           </a>
         ))}
       </nav>

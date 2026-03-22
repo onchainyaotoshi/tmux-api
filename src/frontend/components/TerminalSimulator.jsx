@@ -1,41 +1,44 @@
-import { useState } from 'react';
-import styles from './TerminalSimulator.module.css';
+import { useState } from 'react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 export default function TerminalSimulator({ title, steps }) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0)
 
-  const step = steps[currentStep];
+  const step = steps[currentStep]
 
   return (
-    <div className={styles.terminal}>
-      <div className={styles.titleBar}>
-        <span className={`${styles.dot} ${styles.dotRed}`} />
-        <span className={`${styles.dot} ${styles.dotYellow}`} />
-        <span className={`${styles.dot} ${styles.dotGreen}`} />
-        <span className={styles.titleText}>{title}</span>
+    <Card className="my-5 overflow-hidden bg-[#0d1117] font-mono text-sm">
+      <div className="flex items-center gap-2 border-b border-border bg-[#161b22] px-4 py-2.5">
+        <span className="h-3 w-3 rounded-full bg-[#ff5f56]" />
+        <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
+        <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
+        <span className="ml-2 text-xs text-muted-foreground">{title}</span>
       </div>
-      <div className={styles.body}>
-        <div className={styles.controls}>
+      <div className="min-h-[200px] p-4">
+        <div className="mb-4 flex flex-wrap gap-2">
           {steps.map((s, i) => (
-            <button
+            <Button
               key={i}
-              className={`${styles.btn} ${i === currentStep ? styles.btnActive : ''}`}
+              variant={i === currentStep ? 'secondary' : 'outline'}
+              size="sm"
+              className="font-mono text-xs"
               onClick={() => setCurrentStep(i)}
             >
               {s.label}
-            </button>
+            </Button>
           ))}
         </div>
-        <div className={styles.display}>
+        <div className="overflow-hidden rounded border border-border">
           {step.render()}
         </div>
         {step.statusBar && (
-          <div className={styles.statusBar}>
+          <div className="mt-2 flex justify-between rounded-b bg-muted px-3 py-1 text-xs text-muted-foreground">
             <span>{step.statusBar.left}</span>
             <span>{step.statusBar.right}</span>
           </div>
         )}
       </div>
-    </div>
-  );
+    </Card>
+  )
 }
