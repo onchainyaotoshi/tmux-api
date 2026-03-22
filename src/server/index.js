@@ -12,6 +12,7 @@ import { swaggerSetup } from './plugins/swagger.js'
 import { sessionRoutes } from './routes/sessions.js'
 import { windowRoutes } from './routes/windows.js'
 import { paneRoutes } from './routes/panes.js'
+import { authProxyRoutes } from './routes/authProxy.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT || '9993', 10)
@@ -37,6 +38,9 @@ app.setErrorHandler((error, request, reply) => {
     error: error.message,
   })
 })
+
+// Auth proxy (public, must be registered before auth plugin)
+await app.register(authProxyRoutes, { prefix: '/auth/proxy' })
 
 // Plugins
 await app.register(swaggerSetup, { enabled: SWAGGER_ENABLED })
