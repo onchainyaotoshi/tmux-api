@@ -49,7 +49,7 @@ Rewrite the Foreman frontend from a static tmux tutorial site into a functional 
 
 **Knowledge Base page:**
 - Renders all 6 existing tutorial sections as-is (SessionSection, WindowSection, PaneSection, NavigationSection, ResizeSection, CopyModeSection)
-- Keeps existing IntersectionObserver-based sub-navigation
+- Inline anchor-link navigation at the top for jumping between sections (IntersectionObserver no longer needed since sidebar now handles page-level routing, not section-level)
 
 ### Backend
 
@@ -106,7 +106,6 @@ A `.env.example` file will document all variables.
 - `src/frontend/components/ProtectedRoute.jsx` — auth guard wrapper
 - `src/frontend/components/ConfirmModal.jsx` — yes/no confirmation modal
 - `src/frontend/components/ConfirmModal.module.css`
-- `src/frontend/components/Layout.jsx` — sidebar + main content layout
 - `src/frontend/lib/auth.js` — YaotoshiAuth singleton instance
 - `src/frontend/lib/api.js` — API helper (fetch with Bearer token)
 - `.env.example`
