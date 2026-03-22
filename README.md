@@ -141,7 +141,30 @@ X-API-Key: your-api-key
 
 Open `http://localhost:9993/docs` for interactive API documentation (Scalar).
 
-## Usage Examples
+## Node.js SDK
+
+Install the official SDK:
+
+```bash
+npm install @yaotoshi/tmux-api
+```
+
+```js
+import TmuxApi from '@yaotoshi/tmux-api'
+
+const client = new TmuxApi({
+  baseUrl: 'http://localhost:9993',
+  apiKey: 'your-api-key',
+})
+
+await client.sessions.create({ name: 'worker-1', command: 'claude --chat' })
+await client.terminals.panes.sendKeys('worker-1', '0', '0', { keys: 'hello' })
+const output = await client.terminals.panes.capture('worker-1', '0', '0')
+```
+
+See full SDK docs: [`@yaotoshi/tmux-api` on npm](https://www.npmjs.com/package/@yaotoshi/tmux-api)
+
+## Usage Examples (curl)
 
 ```bash
 API="http://localhost:9993"
@@ -152,12 +175,6 @@ curl -X POST $API/api/sessions \
   -H "X-API-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"name":"worker-1"}'
-
-# Split pane horizontally
-curl -X POST $API/api/sessions/worker-1/windows/0/panes \
-  -H "X-API-Key: $KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"direction":"h"}'
 
 # Send command to pane
 curl -X POST $API/api/sessions/worker-1/windows/0/panes/0/send-keys \
