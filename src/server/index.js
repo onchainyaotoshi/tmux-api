@@ -14,7 +14,7 @@ import { windowRoutes } from './routes/windows.js'
 import { paneRoutes } from './routes/panes.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const PORT = parseInt(process.env.PORT || '9997', 10)
+const PORT = parseInt(process.env.PORT || '9993', 10)
 const API_KEY = process.env.API_KEY
 const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED !== 'false'
 
