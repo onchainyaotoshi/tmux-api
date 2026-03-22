@@ -7,7 +7,7 @@ export default function CallbackPage() {
 
   useEffect(() => {
     auth.handleCallback()
-      .then(() => navigate('/', { replace: true }))
+      .then(() => navigate('/sessions', { replace: true }))
       .catch((err) => {
         console.error('Auth callback failed:', err)
         navigate('/', { replace: true })

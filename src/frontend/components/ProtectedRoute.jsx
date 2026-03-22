@@ -1,18 +1,10 @@
-import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { auth } from '../lib/auth.js'
 
 export default function ProtectedRoute({ children }) {
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    if (auth.isAuthenticated()) {
-      setReady(true)
-    } else {
-      auth.login()
-    }
-  }, [])
-
-  if (!ready) return null
+  if (!auth.isAuthenticated()) {
+    return <Navigate to="/" replace />
+  }
 
   return children
 }
