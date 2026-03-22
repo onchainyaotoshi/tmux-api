@@ -121,7 +121,7 @@ See `.env.example` for full documentation.
 
 **Conventional commits required:** `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`
 
-Current version: **v1.0.0**
+Current version: **v1.1.0**
 
 ## Testing
 
