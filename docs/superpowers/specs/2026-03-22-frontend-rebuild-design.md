@@ -33,10 +33,13 @@ No new features, no structural changes. Pure visual transformation.
 | `--secondary` | `#ffb000` | Amber — warnings, counts, secondary emphasis |
 | `--secondary-foreground` | `#0a0e14` | Text on amber backgrounds |
 | `--muted` | `#151b23` | Muted surface |
-| `--muted-foreground` | `#5a6a7a` | Dim text, comments |
+| `--muted-foreground` | `#6b7d8f` | Dim text, comments (meets WCAG AA 4.5:1 on background) |
 | `--accent` | `#1a2332` | Hover/active surface |
 | `--accent-foreground` | `#00ff41` | Hover/active text |
 | `--destructive` | `#ff3333` | Kill/delete actions |
+| `--destructive-foreground` | `#ffffff` | Text on destructive backgrounds |
+| `--popover` | `#0d1117` | Dropdown/popover backgrounds (matches card) |
+| `--popover-foreground` | `#c9d5e0` | Dropdown/popover text (matches card-foreground) |
 | `--border` | `rgba(0, 255, 65, 0.12)` | Subtle green-tinted borders |
 | `--input` | `rgba(0, 255, 65, 0.08)` | Input backgrounds |
 | `--ring` | `rgba(0, 255, 65, 0.3)` | Focus rings, green glow |
@@ -46,7 +49,7 @@ No new features, no structural changes. Pure visual transformation.
 | Token | Value |
 |---|---|
 | `--sidebar-background` | `#080c10` |
-| `--sidebar-foreground` | `#5a6a7a` |
+| `--sidebar-foreground` | `#6b7d8f` |
 | `--sidebar-primary` | `#00ff41` |
 | `--sidebar-accent` | `#1a2332` |
 | `--sidebar-border` | `rgba(0, 255, 65, 0.1)` |
@@ -64,12 +67,13 @@ No new features, no structural changes. Pure visual transformation.
 
 Collapsible sidebar — standard modern dashboard pattern:
 
-- **Expanded state (~w-56):** Icon + label for each nav item
-- **Collapsed state (~w-16):** Icon only, with tooltip on hover showing label
+- **Expanded state (w-56 / 14rem):** Icon + label for each nav item
+- **Collapsed state (w-16 / 4rem):** Icon only, with tooltip on hover showing label
 - **Toggle:** Button at bottom of sidebar to collapse/expand
-- **Persistence:** Collapsed/expanded state saved in `localStorage`
+- **Persistence:** Collapsed/expanded state saved in `localStorage` key `foreman-sidebar-collapsed`. Default on first visit: expanded.
 - **Mobile (<md):** Sidebar hidden entirely. Slim top bar with hamburger toggle. Sidebar opens as a shadcn Sheet (slide from left) with overlay.
-- **Transition:** Smooth width transition (200ms ease)
+- **Transition:** Smooth width transition (200ms ease). Main content margin transitions in sync.
+- **Implementation:** Plain `<aside>` approach (do NOT use `components/ui/sidebar.jsx` — incompatible with Tailwind v4 per CLAUDE.md). Delete the unused shadcn sidebar file.
 
 ### Styling
 
@@ -86,7 +90,7 @@ Collapsible sidebar — standard modern dashboard pattern:
 
 ### Rename
 
-"Knowledge Base" → "About Tmux" in sidebar nav.
+"Knowledge Base" → "About Tmux" in sidebar nav. Route path remains `/knowledge-base` — label-only change.
 
 ## HomePage (Landing Page)
 
@@ -119,7 +123,7 @@ Full-width centered content, no sidebar context needed (sidebar still visible bu
    - Green border, slight hover lift
 
 3. **Background**
-   - Subtle matrix-style falling characters animation — very faint opacity (~0.03), CSS/canvas
+   - Subtle matrix-style falling characters animation via lightweight `<canvas>` — opacity ~0.05 (tunable via CSS variable). Distinct sub-task during implementation.
    - Should not distract from content, purely atmospheric
 
 ## SessionsPage
@@ -178,13 +182,17 @@ No visual changes needed — it's a transient OAuth redirect handler.
 - **Focus states:** Green glow ring on all interactive elements
 - **Transitions:** 150ms default on color/background/border transitions
 - **Blinking cursor animation:** Reusable `@keyframes blink` for the `█` cursor used in multiple places
+- **Reduced motion:** `@media (prefers-reduced-motion: reduce)` disables typing animations, matrix rain, cursor blink, and sidebar transitions
 
 ### Font Loading
 
-Add JetBrains Mono via `<link>` in `index.html`:
+Add JetBrains Mono via `<link>` in `index.html` (only weights 400 and 700 to minimize payload):
 ```html
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" as="style" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 ```
+
+All CSS variable values use hex or rgba format, replacing the default oklch values from shadcn.
 
 ## Responsive Breakpoints
 
@@ -211,6 +219,18 @@ Add JetBrains Mono via `<link>` in `index.html`:
 | `src/frontend/components/TerminalSimulator.jsx` | Align colors to new palette |
 | `src/frontend/components/terminal-styles.js` | Update Tailwind class constants |
 | `src/frontend/sections/*.jsx` | Inherit styling from parent components, minor tweaks |
+| `src/frontend/components/ui/sidebar.jsx` | Delete — unused, incompatible with Tailwind v4 |
+| `src/frontend/components/ProtectedRoute.jsx` | Unchanged — no visual output |
+| `src/frontend/lib/api.js` | Unchanged — logic only |
+| `src/frontend/lib/auth.js` | Unchanged — logic only |
+
+## Accessibility
+
+- **Color contrast:** All text meets WCAG AA 4.5:1 minimum. `--muted-foreground` set to `#6b7d8f` (~4.5:1 on `#0a0e14`).
+- **Focus indicators:** Green glow ring + solid 2px fallback ring for keyboard-only users.
+- **Reduced motion:** All animations respect `prefers-reduced-motion: reduce`.
+- **ASCII art:** Hero ASCII "FOREMAN" wrapped in `role="img"` with `aria-label="Foreman"`.
+- **Sidebar tooltips:** Collapsed sidebar icons have tooltips for label context.
 
 ## Scope
 
