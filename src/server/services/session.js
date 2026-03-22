@@ -15,12 +15,21 @@ export class SessionService {
     this.db = db
   }
 
-  async spawn(name, command, cwd) {
+  async spawn(name, command, cwd, { env = null, agentId = null } = {}) {
     const id = randomUUID()
     const eventToken = randomUUID()
     const sessionName = `${SESSION_PREFIX}${name}`
 
     await this.terminal.createSession(sessionName, cwd || undefined)
+
+    // Send env vars before command
+    if (env && typeof env === 'object') {
+      for (const [key, val] of Object.entries(env)) {
+        await this.terminal.sendKeys(sessionName, '0', '0', `export ${key}=${val}`)
+        await this.terminal.sendKeys(sessionName, '0', '0', 'Enter')
+      }
+    }
+
     await this.terminal.sendKeys(sessionName, '0', '0', command)
     await this.terminal.sendKeys(sessionName, '0', '0', 'Enter')
 
@@ -29,6 +38,7 @@ export class SessionService {
         id, name, command, status: 'idle',
         cwd: cwd || null,
         event_token: eventToken,
+        agent_id: agentId,
       })
     } catch (err) {
       try { await this.terminal.killSession(sessionName) } catch {}
