@@ -1,6 +1,6 @@
 # Foreman
 
-REST API server untuk kontrol tmux secara remote. Deploy server, hit endpoint dari bahasa/tool apapun.
+REST API server for controlling tmux remotely. Deploy the server, hit endpoints from any language or tool.
 
 ## Architecture
 
@@ -89,9 +89,9 @@ cp .env.example .env   # edit API_KEY
 docker compose up -d
 ```
 
-Server berjalan di `http://127.0.0.1:9993` (localhost only).
+Server runs at `http://127.0.0.1:9993` (localhost only). Port is configurable via `PORT` in `.env`.
 
-### Expose ke Internet
+### Expose to the Internet
 
 ```bash
 cloudflared tunnel --url http://localhost:9993
@@ -101,7 +101,7 @@ cloudflared tunnel --url http://localhost:9993
 
 ### Authentication
 
-Semua `/api/*` endpoint butuh header:
+All `/api/*` endpoints require the header:
 ```
 X-API-Key: your-api-key
 ```
@@ -137,7 +137,7 @@ X-API-Key: your-api-key
 
 ### Swagger UI
 
-Buka `http://localhost:9993/docs` untuk interactive API documentation.
+Open `http://localhost:9993/docs` for interactive API documentation.
 
 ## Usage Examples
 
@@ -231,7 +231,7 @@ graph LR
 - **release/*** — release prep (develop → main)
 - **hotfix/*** — urgent fixes (from main)
 
-Commits harus conventional: `feat:`, `fix:`, `docs:`, `chore:`, dll.
+Commits must follow conventional format: `feat:`, `fix:`, `docs:`, `chore:`, etc.
 
 ## License
 
