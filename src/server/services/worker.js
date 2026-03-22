@@ -16,7 +16,12 @@ export class WorkerService {
     await this.tmux.sendKeys(sessionName, '0', '0', command)
     await this.tmux.sendKeys(sessionName, '0', '0', 'Enter')
 
-    return this.db.createWorker({ id, name, command, status: 'idle' })
+    try {
+      return this.db.createWorker({ id, name, command, status: 'idle' })
+    } catch (err) {
+      try { await this.tmux.killSession(sessionName) } catch {}
+      throw err
+    }
   }
 
   async sendTask(id, input) {
