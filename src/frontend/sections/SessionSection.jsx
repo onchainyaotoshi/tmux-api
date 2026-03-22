@@ -17,7 +17,7 @@ const steps = [
     render: () => (
       <div className={ts.output}>
         <span className={ts.prompt}>$ </span>tmux new -s kerja{'\n'}
-        <span style={{ color: '#666' }}># Session "kerja" dibuat. Anda masuk ke dalamnya.</span>
+        <span className="text-muted-foreground"># Session "kerja" dibuat. Anda masuk ke dalamnya.</span>
       </div>
     ),
     statusBar: { left: '[kerja] 0:bash*', right: '"hostname" 15:04' },
@@ -36,7 +36,7 @@ const steps = [
     label: 'Detach',
     render: () => (
       <div className={ts.output}>
-        <span style={{ color: '#666' }}># Di dalam tmux, tekan:</span>{'\n'}
+        <span className="text-muted-foreground"># Di dalam tmux, tekan:</span>{'\n'}
         <span className={ts.prompt}>Ctrl+B </span>lalu <span className={ts.prompt}>d</span>{'\n\n'}
         [detached (from session kerja)]
       </div>
@@ -47,7 +47,7 @@ const steps = [
     render: () => (
       <div className={ts.output}>
         <span className={ts.prompt}>$ </span>tmux attach -t kerja{'\n'}
-        <span style={{ color: '#666' }}># Kembali masuk ke session "kerja"</span>
+        <span className="text-muted-foreground"># Kembali masuk ke session "kerja"</span>
       </div>
     ),
     statusBar: { left: '[kerja] 0:bash*', right: '"hostname" 15:05' },

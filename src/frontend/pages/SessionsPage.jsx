@@ -25,7 +25,7 @@ export default function SessionsPage() {
     try {
       setError(null)
       setLoading(true)
-      const res = await apiFetch('/terminals')
+      const res = await apiFetch('/sessions')
       setSessions(res.data)
     } catch (err) {
       setError(err.message)
@@ -41,7 +41,7 @@ export default function SessionsPage() {
   const handleKill = async () => {
     if (!killTarget) return
     try {
-      await apiFetch(`/terminals/${killTarget}`, { method: 'DELETE' })
+      await apiFetch(`/sessions/${killTarget}`, { method: 'DELETE' })
       setKillTarget(null)
       fetchSessions()
     } catch (err) {
@@ -56,11 +56,24 @@ export default function SessionsPage() {
 
   return (
     <div className="max-w-3xl">
+      {/* Terminal prompt header */}
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-mono text-2xl font-bold">Terminals</h2>
-        <Button variant="outline" size="sm" onClick={fetchSessions} disabled={loading}>
+        <h2 className="font-mono text-lg">
+          <span className="text-primary">user@foreman</span>
+          <span className="text-muted-foreground">:</span>
+          <span className="text-secondary">~/sessions</span>
+          <span className="text-muted-foreground">$ </span>
+          <span className="animate-blink">█</span>
+        </h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchSessions}
+          disabled={loading}
+          className="border-primary/30 text-primary hover:bg-primary/10 font-mono text-xs"
+        >
           <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
-          {loading ? 'Loading...' : 'Refresh'}
+          {loading ? 'loading...' : '↻ refresh'}
         </Button>
       </div>
 
@@ -71,46 +84,52 @@ export default function SessionsPage() {
       )}
 
       {sessions.length === 0 && !loading ? (
-        <p className="py-10 text-center text-muted-foreground">No active sessions</p>
+        <p className="py-10 text-center font-mono text-muted-foreground">
+          &gt; no active sessions. create one to get started.
+          <span className="animate-blink">_</span>
+        </p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Windows</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-[160px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sessions.map((s) => (
-              <TableRow key={s.name}>
-                <TableCell className="font-mono">{s.name}</TableCell>
-                <TableCell>{s.windows}</TableCell>
-                <TableCell>{formatDate(s.created)}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setViewTarget(s.name)}
-                    >
-                      <Eye data-icon="inline-start" />
-                      View
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setKillTarget(s.name)}
-                    >
-                      Kill
-                    </Button>
-                  </div>
-                </TableCell>
+        <div className="rounded-lg border border-primary/20 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-primary/15 hover:bg-transparent">
+                <TableHead className="text-primary font-mono text-xs uppercase tracking-wider">Name</TableHead>
+                <TableHead className="text-primary font-mono text-xs uppercase tracking-wider">Windows</TableHead>
+                <TableHead className="text-primary font-mono text-xs uppercase tracking-wider">Created</TableHead>
+                <TableHead className="w-[180px]"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sessions.map((s) => (
+                <TableRow key={s.name} className="border-b border-border/50 hover:bg-accent/30">
+                  <TableCell className="font-mono text-foreground">{s.name}</TableCell>
+                  <TableCell className="font-mono text-secondary">{s.windows}</TableCell>
+                  <TableCell className="font-mono text-muted-foreground text-xs">{formatDate(s.created)}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewTarget(s.name)}
+                        className="border-primary/30 text-primary hover:bg-primary/10 font-mono text-xs"
+                      >
+                        ▸ view
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setKillTarget(s.name)}
+                        className="border-destructive/30 text-destructive hover:bg-destructive/10 font-mono text-xs"
+                      >
+                        × kill
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {killTarget && (

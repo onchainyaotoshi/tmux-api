@@ -51,12 +51,12 @@ const steps = [
     render: () => (
       <div className={`${ts.paneContainer} ${ts.paneContainerVertical}`} style={{ height: '160px' }}>
         <div style={{ display: 'flex', flex: 1 }}>
-          <div className={ts.pane}><span style={{ fontSize: '2rem', color: '#00ff41' }}>0</span></div>
-          <div className={ts.pane}><span style={{ fontSize: '2rem', color: '#00ff41' }}>1</span></div>
+          <div className={ts.pane}><span style={{ fontSize: '2rem' }} className="text-primary">0</span></div>
+          <div className={ts.pane}><span style={{ fontSize: '2rem' }} className="text-primary">1</span></div>
         </div>
         <div style={{ display: 'flex', flex: 1 }}>
-          <div className={ts.pane}><span style={{ fontSize: '2rem', color: '#00ff41' }}>2</span></div>
-          <div className={ts.pane}><span style={{ fontSize: '2rem', color: '#00ff41' }}>3</span></div>
+          <div className={ts.pane}><span style={{ fontSize: '2rem' }} className="text-primary">2</span></div>
+          <div className={ts.pane}><span style={{ fontSize: '2rem' }} className="text-primary">3</span></div>
         </div>
       </div>
     ),

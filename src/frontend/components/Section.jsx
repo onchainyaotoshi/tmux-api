@@ -1,11 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
 
 export default function Section({ id, title, description, children }) {
   return (
     <section id={id} className="mb-16 scroll-mt-5">
-      <Card>
+      <Card className="border-primary/15 bg-card">
         <CardHeader>
-          <CardTitle className="font-mono text-2xl">{title}</CardTitle>
+          <div className="text-center font-mono text-sm text-primary tracking-widest">
+            ═══ {title.toUpperCase()} ═══
+          </div>
           <CardDescription className="text-base leading-relaxed">{description}</CardDescription>
         </CardHeader>
         <CardContent>

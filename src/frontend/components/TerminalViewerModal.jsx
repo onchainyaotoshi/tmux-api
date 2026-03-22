@@ -100,9 +100,9 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl border-primary/20 bg-card">
         <DialogHeader>
-          <DialogTitle className="font-mono">Session: {sessionName}</DialogTitle>
+          <DialogTitle className="font-mono text-primary">Session: {sessionName}</DialogTitle>
         </DialogHeader>
 
         <div className="flex items-center gap-4">
@@ -158,7 +158,7 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
         ) : (
           <pre
             ref={outputRef}
-            className="font-mono text-sm bg-zinc-950 text-zinc-100 p-4 rounded-lg max-h-[60vh] overflow-auto"
+            className="font-mono text-sm bg-[#000000] text-[#33ff77] p-4 rounded-lg max-h-[60vh] overflow-auto border border-primary/10"
           >
             {loading ? 'Loading...' : output || '\n'}
           </pre>
@@ -170,9 +170,10 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
             size="sm"
             onClick={() => fetchOutput(selectedWindow, selectedPane)}
             disabled={loading || selectedWindow === null || selectedPane === null}
+            className="border-primary/30 text-primary hover:bg-primary/10 font-mono text-xs"
           >
             <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
-            Refresh
+            ↻ refresh
           </Button>
         </div>
       </DialogContent>
