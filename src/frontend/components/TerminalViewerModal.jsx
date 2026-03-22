@@ -59,6 +59,7 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
       }
     } catch (err) {
       setError(err.message)
+    } finally {
       setLoading(false)
     }
   }, [sessionName, fetchOutput])
