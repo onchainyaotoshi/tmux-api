@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Eye } from 'lucide-react'
 import { apiFetch } from '../lib/api.js'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -12,12 +12,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import ConfirmModal from '../components/ConfirmModal.jsx'
+import TerminalViewerModal from '../components/TerminalViewerModal.jsx'
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [killTarget, setKillTarget] = useState(null)
+  const [viewTarget, setViewTarget] = useState(null)
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -77,7 +79,7 @@ export default function SessionsPage() {
               <TableHead>Name</TableHead>
               <TableHead>Windows</TableHead>
               <TableHead>Created</TableHead>
-              <TableHead className="w-[100px]"></TableHead>
+              <TableHead className="w-[160px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,13 +89,23 @@ export default function SessionsPage() {
                 <TableCell>{s.windows}</TableCell>
                 <TableCell>{formatDate(s.created)}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setKillTarget(s.name)}
-                  >
-                    Kill
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setViewTarget(s.name)}
+                    >
+                      <Eye data-icon="inline-start" />
+                      View
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setKillTarget(s.name)}
+                    >
+                      Kill
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -107,6 +119,13 @@ export default function SessionsPage() {
           message={`Are you sure you want to kill session "${killTarget}"?`}
           onConfirm={handleKill}
           onCancel={() => setKillTarget(null)}
+        />
+      )}
+
+      {viewTarget && (
+        <TerminalViewerModal
+          sessionName={viewTarget}
+          onClose={() => setViewTarget(null)}
         />
       )}
     </div>
