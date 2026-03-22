@@ -9,9 +9,14 @@ export async function apiFetch(path, options = {}) {
     headers: {
       ...options.headers,
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     },
   })
+
+  if (res.status === 401) {
+    auth.login()
+    return
+  }
 
   const data = await res.json()
 
