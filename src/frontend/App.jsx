@@ -1,39 +1,34 @@
-import Sidebar from './components/Sidebar';
-import SessionSection from './sections/SessionSection';
-import WindowSection from './sections/WindowSection';
-import PaneSection from './sections/PaneSection';
-import NavigationSection from './sections/NavigationSection';
-import ResizeSection from './sections/ResizeSection';
-import CopyModeSection from './sections/CopyModeSection';
-import styles from './App.module.css';
-
-const sections = [
-  { id: 'session', title: 'Session' },
-  { id: 'window', title: 'Window' },
-  { id: 'pane', title: 'Pane' },
-  { id: 'navigasi', title: 'Navigasi' },
-  { id: 'resize', title: 'Resize' },
-  { id: 'copy-mode', title: 'Copy Mode' },
-];
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Sidebar from './components/Sidebar.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
+import SessionsPage from './pages/SessionsPage.jsx'
+import KnowledgeBasePage from './pages/KnowledgeBasePage.jsx'
+import CallbackPage from './pages/CallbackPage.jsx'
+import styles from './App.module.css'
 
 function App() {
   return (
-    <div className={styles.layout}>
-      <Sidebar sections={sections} />
-      <main className={styles.main}>
-        <div className={styles.header}>
-          <h1>Foreman</h1>
-          <p>Tmux REST API & visual tutorial untuk orchestrasi terminal</p>
-        </div>
-        <SessionSection />
-        <WindowSection />
-        <PaneSection />
-        <NavigationSection />
-        <ResizeSection />
-        <CopyModeSection />
-      </main>
-    </div>
-  );
+    <Routes>
+      <Route path="/callback" element={<CallbackPage />} />
+      <Route
+        path="*"
+        element={
+          <ProtectedRoute>
+            <div className={styles.layout}>
+              <Sidebar />
+              <main className={styles.main}>
+                <Routes>
+                  <Route path="/" element={<SessionsPage />} />
+                  <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+            </div>
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  )
 }
 
-export default App;
+export default App
