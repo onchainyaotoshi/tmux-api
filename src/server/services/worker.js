@@ -2,26 +2,67 @@ import { randomUUID } from 'node:crypto'
 
 const WORKER_PREFIX = 'worker-'
 
+const EVENT_STATE_MAP = {
+  notification: 'waiting_input',
+  stop: 'idle',
+  stop_failure: 'error',
+  tool_use: 'running',
+}
+
 export class WorkerService {
   constructor(tmux, db) {
     this.tmux = tmux
     this.db = db
   }
 
-  async spawn(name, command) {
+  async spawn(name, command, cwd) {
     const id = randomUUID()
+    const eventToken = randomUUID()
     const sessionName = `${WORKER_PREFIX}${name}`
 
-    await this.tmux.createSession(sessionName)
+    await this.tmux.createSession(sessionName, cwd || undefined)
     await this.tmux.sendKeys(sessionName, '0', '0', command)
     await this.tmux.sendKeys(sessionName, '0', '0', 'Enter')
 
     try {
-      return this.db.createWorker({ id, name, command, status: 'idle' })
+      return this.db.createWorker({
+        id, name, command, status: 'idle',
+        cwd: cwd || null,
+        event_token: eventToken,
+      })
     } catch (err) {
       try { await this.tmux.killSession(sessionName) } catch {}
       throw err
     }
+  }
+
+  // Token validation is optional at service level — route enforces it.
+  // When token is undefined, check is skipped (allows internal calls without token).
+  async processEvent(id, type, data, token) {
+    const worker = this.db.getWorker(id)
+    if (!worker) throw new Error(`Worker not found: ${id}`)
+
+    if (token !== undefined && token !== worker.event_token) {
+      throw new Error('Invalid event token')
+    }
+
+    const event = this.db.createEvent({
+      id: randomUUID(),
+      worker_id: id,
+      type,
+      data: data || null,
+    })
+
+    const newStatus = EVENT_STATE_MAP[type]
+    if (newStatus) {
+      this.db.updateStatus(id, newStatus)
+    }
+
+    return event
+  }
+
+  getEvents(id, limit) {
+    return this.db.listEvents(id, limit)
   }
 
   async sendTask(id, input) {
@@ -105,6 +146,7 @@ export class WorkerService {
     if (!worker) throw new Error(`Worker not found: ${id}`)
 
     const output = await this.getOutput(id)
-    return { ...worker, output }
+    const lastEvent = this.db.getLastEvent(id) || null
+    return { ...worker, output, last_event: lastEvent }
   }
 }

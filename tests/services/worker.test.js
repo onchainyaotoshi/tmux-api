@@ -23,12 +23,86 @@ afterEach(async () => {
   for (const w of workers) {
     try { await tmux.killSession(`${WORKER_PREFIX}${w.name}`) } catch {}
   }
+  db.db.exec('DELETE FROM worker_events')
   db.db.exec('DELETE FROM workers')
 })
 
 afterAll(() => {
   db.close()
   if (existsSync(TEST_DB)) unlinkSync(TEST_DB)
+})
+
+describe('spawn with cwd', () => {
+  it('should create worker with cwd', async () => {
+    const worker = await workerService.spawn('cwd-w1', 'bash', '/tmp')
+    expect(worker.cwd).toBe('/tmp')
+    expect(worker.event_token).toBeDefined()
+    expect(worker.event_token.length).toBe(36) // UUID
+  })
+
+  it('should work without cwd', async () => {
+    const worker = await workerService.spawn('no-cwd-w1', 'bash')
+    expect(worker.cwd).toBeNull()
+    expect(worker.event_token).toBeDefined()
+  })
+})
+
+describe('processEvent', () => {
+  it('should store event and update status to waiting_input', async () => {
+    const worker = await workerService.spawn('evt-w1', 'bash')
+    const event = await workerService.processEvent(worker.id, 'notification', { message: 'confirm?' })
+    expect(event.type).toBe('notification')
+    const updated = db.getWorker(worker.id)
+    expect(updated.status).toBe('waiting_input')
+  })
+
+  it('should update status to idle on stop event', async () => {
+    const worker = await workerService.spawn('evt-w2', 'bash')
+    await workerService.processEvent(worker.id, 'tool_use', {})
+    expect(db.getWorker(worker.id).status).toBe('running')
+    await workerService.processEvent(worker.id, 'stop', {})
+    expect(db.getWorker(worker.id).status).toBe('idle')
+  })
+
+  it('should update status to error on stop_failure', async () => {
+    const worker = await workerService.spawn('evt-w3', 'bash')
+    await workerService.processEvent(worker.id, 'stop_failure', { error: 'rate_limit' })
+    expect(db.getWorker(worker.id).status).toBe('error')
+  })
+
+  it('should not change status for unknown event type', async () => {
+    const worker = await workerService.spawn('evt-w4', 'bash')
+    await workerService.processEvent(worker.id, 'custom_event', {})
+    expect(db.getWorker(worker.id).status).toBe('idle')
+  })
+
+  it('should throw for unknown worker', async () => {
+    await expect(workerService.processEvent('nonexistent', 'stop', {}))
+      .rejects.toThrow()
+  })
+
+  it('should validate event_token', async () => {
+    const worker = await workerService.spawn('evt-w5', 'bash')
+    await expect(workerService.processEvent(worker.id, 'stop', {}, 'wrong-token'))
+      .rejects.toThrow(/Invalid event token/)
+  })
+
+  it('should accept valid event_token', async () => {
+    const worker = await workerService.spawn('evt-w6', 'bash')
+    const event = await workerService.processEvent(worker.id, 'stop', {}, worker.event_token)
+    expect(event.type).toBe('stop')
+  })
+})
+
+describe('getEvents', () => {
+  it('should return event history', async () => {
+    const worker = await workerService.spawn('hist-w1', 'bash')
+    await workerService.processEvent(worker.id, 'tool_use', {})
+    await workerService.processEvent(worker.id, 'stop', {})
+    const events = workerService.getEvents(worker.id)
+    expect(events.length).toBe(2)
+    expect(events[0].type).toBe('stop') // newest first
+  })
 })
 
 describe('WorkerService', () => {
