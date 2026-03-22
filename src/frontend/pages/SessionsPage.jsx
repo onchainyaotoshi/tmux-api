@@ -25,7 +25,7 @@ export default function SessionsPage() {
     try {
       setError(null)
       setLoading(true)
-      const res = await apiFetch('/sessions')
+      const res = await apiFetch('/terminals')
       setSessions(res.data)
     } catch (err) {
       setError(err.message)
@@ -41,7 +41,7 @@ export default function SessionsPage() {
   const handleKill = async () => {
     if (!killTarget) return
     try {
-      await apiFetch(`/sessions/${killTarget}`, { method: 'DELETE' })
+      await apiFetch(`/terminals/${killTarget}`, { method: 'DELETE' })
       setKillTarget(null)
       fetchSessions()
     } catch (err) {
@@ -57,7 +57,7 @@ export default function SessionsPage() {
   return (
     <div className="max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-mono text-2xl font-bold">Sessions</h2>
+        <h2 className="font-mono text-2xl font-bold">Terminals</h2>
         <Button variant="outline" size="sm" onClick={fetchSessions} disabled={loading}>
           <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
           {loading ? 'Loading...' : 'Refresh'}

@@ -6,13 +6,13 @@ const HOOK_NAME_MAP = {
 }
 
 export async function eventRoutes(fastify) {
-  const { workerService } = fastify
+  const { sessionService } = fastify
 
-  // POST /api/workers/:id/events — receive event (token auth, no API key)
-  fastify.post('/workers/:id/events', {
+  // POST /api/sessions/:id/events — receive event (token auth, no API key)
+  fastify.post('/sessions/:id/events', {
     schema: {
-      tags: ['Events'],
-      summary: 'Report worker event (token auth)',
+      tags: ['L2 — Session'],
+      summary: 'Report session event (token auth)',
       params: {
         type: 'object',
         properties: { id: { type: 'string' } },
@@ -63,7 +63,7 @@ export async function eventRoutes(fastify) {
     }
 
     try {
-      const event = await workerService.processEvent(id, type, data, token)
+      const event = await sessionService.processEvent(id, type, data, token)
       reply.code(201)
       return { success: true, data: event }
     } catch (err) {
@@ -76,11 +76,11 @@ export async function eventRoutes(fastify) {
     }
   })
 
-  // GET /api/workers/:id/events — list events (API key auth)
-  fastify.get('/workers/:id/events', {
+  // GET /api/sessions/:id/events — list events (API key auth)
+  fastify.get('/sessions/:id/events', {
     schema: {
-      tags: ['Events'],
-      summary: 'List worker events',
+      tags: ['L2 — Session'],
+      summary: 'List session events',
       params: {
         type: 'object',
         properties: { id: { type: 'string' } },
@@ -93,7 +93,7 @@ export async function eventRoutes(fastify) {
       },
     },
   }, async (request) => {
-    const data = workerService.getEvents(request.params.id, request.query.limit)
+    const data = sessionService.getEvents(request.params.id, request.query.limit)
     return { success: true, data }
   })
 }

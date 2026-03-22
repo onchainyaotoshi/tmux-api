@@ -45,10 +45,10 @@ describe('authPlugin', () => {
     expect(res.statusCode).toBe(200)
   })
 
-  it('should skip auth for POST /api/workers/:id/events', async () => {
+  it('should skip auth for POST /api/sessions/:id/events', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/api/workers/some-id/events?token=test',
+      url: '/api/sessions/some-id/events?token=test',
       payload: { type: 'test' },
     })
     // Should NOT be 401 — auth plugin should skip this route

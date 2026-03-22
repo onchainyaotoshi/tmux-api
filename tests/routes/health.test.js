@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import Fastify from 'fastify'
 import { authPlugin } from '../../src/server/plugins/auth.js'
 import { healthRoutes } from '../../src/server/routes/health.js'
-import { TmuxService } from '../../src/server/services/tmux.js'
-import { WorkerService } from '../../src/server/services/worker.js'
+import { TerminalService } from '../../src/server/services/terminal.js'
+import { SessionService } from '../../src/server/services/session.js'
 import { DatabaseService } from '../../src/server/services/database.js'
 import { existsSync, unlinkSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
@@ -11,31 +11,31 @@ import { join } from 'node:path'
 const API_KEY = 'test-key'
 const headers = { 'x-api-key': API_KEY }
 const TEST_DB = join(process.cwd(), 'data', 'test-routes-health.db')
-const WORKER_PREFIX = 'worker-'
+const SESSION_PREFIX = 'session-'
 
-let app, tmux, db, workerService
+let app, terminal, db, sessionService
 
 beforeAll(async () => {
   mkdirSync(join(process.cwd(), 'data'), { recursive: true })
-  tmux = new TmuxService()
+  terminal = new TerminalService()
   db = new DatabaseService(TEST_DB)
   db.init()
-  workerService = new WorkerService(tmux, db)
+  sessionService = new SessionService(terminal, db)
 
   app = Fastify()
-  app.decorate('tmux', tmux)
+  app.decorate('terminal', terminal)
   app.decorate('db', db)
-  app.decorate('workerService', workerService)
+  app.decorate('sessionService', sessionService)
   await app.register(authPlugin, { apiKey: API_KEY })
   await app.register(healthRoutes, { prefix: '/api' })
 })
 
 afterEach(async () => {
-  const workers = db.listWorkers()
-  for (const w of workers) {
-    try { await tmux.killSession(`${WORKER_PREFIX}${w.name}`) } catch {}
+  const sessions = db.listSessions()
+  for (const s of sessions) {
+    try { await terminal.killSession(`${SESSION_PREFIX}${s.name}`) } catch {}
   }
-  db.db.exec('DELETE FROM workers')
+  db.db.exec('DELETE FROM sessions')
 })
 
 afterAll(async () => {
@@ -44,20 +44,20 @@ afterAll(async () => {
   await app.close()
 })
 
-describe('GET /api/health/workers', () => {
+describe('GET /api/health/sessions', () => {
   it('should require auth', async () => {
     const res = await app.inject({
-      method: 'GET', url: '/api/health/workers',
+      method: 'GET', url: '/api/health/sessions',
     })
     expect(res.statusCode).toBe(401)
   })
 
-  it('should return health for all workers', async () => {
-    await workerService.spawn('health-all-1', 'bash')
-    await workerService.spawn('health-all-2', 'bash')
+  it('should return health for all sessions', async () => {
+    await sessionService.spawn('health-all-1', 'bash')
+    await sessionService.spawn('health-all-2', 'bash')
 
     const res = await app.inject({
-      method: 'GET', url: '/api/health/workers', headers,
+      method: 'GET', url: '/api/health/sessions', headers,
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
@@ -67,14 +67,14 @@ describe('GET /api/health/workers', () => {
     expect(body.data[1].alive).toBe(true)
   })
 
-  it('should detect dead workers', async () => {
-    const worker = await workerService.spawn('health-dead', 'bash')
-    await tmux.killSession(`${WORKER_PREFIX}health-dead`)
+  it('should detect dead sessions', async () => {
+    const session = await sessionService.spawn('health-dead', 'bash')
+    await terminal.killSession(`${SESSION_PREFIX}health-dead`)
 
     const res = await app.inject({
-      method: 'GET', url: '/api/health/workers', headers,
+      method: 'GET', url: '/api/health/sessions', headers,
     })
-    const found = res.json().data.find(w => w.id === worker.id)
+    const found = res.json().data.find(s => s.id === session.id)
     expect(found.alive).toBe(false)
     expect(found.status).toBe('failed')
   })

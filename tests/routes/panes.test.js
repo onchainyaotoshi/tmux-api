@@ -2,30 +2,30 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import Fastify from 'fastify'
 import { authPlugin } from '../../src/server/plugins/auth.js'
 import { paneRoutes } from '../../src/server/routes/panes.js'
-import { TmuxService } from '../../src/server/services/tmux.js'
+import { TerminalService } from '../../src/server/services/terminal.js'
 
 const API_KEY = 'test-key'
 const headers = { 'x-api-key': API_KEY }
 const TEST_SESSION = 'pane-route-test'
-const BASE = `/api/sessions/${TEST_SESSION}/windows/0/panes`
+const BASE = `/api/terminals/${TEST_SESSION}/windows/0/panes`
 
 let app
-const tmux = new TmuxService()
+const terminalService = new TerminalService()
 
 async function cleanup() {
-  try { await tmux.killSession(TEST_SESSION) } catch {}
+  try { await terminalService.killSession(TEST_SESSION) } catch {}
 }
 
 beforeAll(async () => {
   app = Fastify()
-  app.decorate('tmux', tmux)
+  app.decorate('terminal', terminalService)
   await app.register(authPlugin, { apiKey: API_KEY })
   await app.register(paneRoutes, { prefix: '/api' })
 })
 
 beforeEach(async () => {
   await cleanup()
-  await tmux.createSession(TEST_SESSION)
+  await terminalService.createSession(TEST_SESSION)
 })
 
 afterAll(async () => {
@@ -50,7 +50,7 @@ describe('POST .../panes', () => {
       payload: { direction: 'h' }
     })
     expect(res.statusCode).toBe(201)
-    const panes = await tmux.listPanes(TEST_SESSION, 0)
+    const panes = await terminalService.listPanes(TEST_SESSION, 0)
     expect(panes.length).toBe(2)
   })
 
@@ -73,7 +73,7 @@ describe('POST .../panes', () => {
 
 describe('PUT .../panes/:index/resize', () => {
   it('should resize a pane', async () => {
-    await tmux.splitPane(TEST_SESSION, 0, 'h')
+    await terminalService.splitPane(TEST_SESSION, 0, 'h')
     const res = await app.inject({
       method: 'PUT', url: `${BASE}/0/resize`, headers,
       payload: { direction: 'R', amount: 5 }
@@ -82,7 +82,7 @@ describe('PUT .../panes/:index/resize', () => {
   })
 
   it('should reject invalid resize direction', async () => {
-    await tmux.splitPane(TEST_SESSION, 0, 'h')
+    await terminalService.splitPane(TEST_SESSION, 0, 'h')
     const res = await app.inject({
       method: 'PUT', url: `${BASE}/0/resize`, headers,
       payload: { direction: 'X', amount: 5 }
@@ -93,7 +93,7 @@ describe('PUT .../panes/:index/resize', () => {
 
 describe('DELETE .../panes/:index', () => {
   it('should kill a pane', async () => {
-    await tmux.splitPane(TEST_SESSION, 0, 'h')
+    await terminalService.splitPane(TEST_SESSION, 0, 'h')
     const res = await app.inject({
       method: 'DELETE', url: `${BASE}/1`, headers
     })
