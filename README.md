@@ -1,5 +1,7 @@
 # tmux-api
 
+[![npm](https://img.shields.io/npm/v/@yaotoshi/tmux-api)](https://www.npmjs.com/package/@yaotoshi/tmux-api)
+
 Stateless REST API server for controlling tmux remotely. Deploy the server, hit endpoints from any language or tool.
 
 ## Architecture
