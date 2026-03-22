@@ -54,15 +54,18 @@ Stateless REST API for controlling tmux remotely. Fastify + minimal frontend (tu
 - `src/server/services/agent.js` — entire file
 - `src/server/routes/agents.js` — entire file
 - `src/server/routes/events.js` — entire file
+- `src/server/routes/authProxy.js` — frontend OAuth proxy, no longer needed without frontend auth
+- `src/server/routes/health.js` — bulk health check route (per-session health stays in session routes)
 - `better-sqlite3` dependency
 - UUID generation in SessionService
 - Status state machine (`EVENT_STATE_MAP`)
 - Event token auth
-- Frontend: Sessions page, Callback page, ProtectedRoute, ConfirmModal, TerminalViewerModal
+- Auth plugin: remove event route bypass (`POST /api/sessions/:id/events` skip)
+- Frontend: SessionsPage, CallbackPage, AgentsPage, ProtectedRoute, ConfirmDialog, TerminalViewer
 - Frontend: `@yaotoshi/auth-sdk`, auth flow (`lib/auth.js`), `lib/api.js`
 - Frontend: `use-sidebar` hook (if only used by auth sidebar)
-- Database migration code
-- Agent-related test files
+- Database migration code, `data/foreman.db` file (no longer used; archive if needed)
+- Agent-related test files (`tests/services/agent.test.js`, `tests/routes/agents.test.js`)
 
 ### L2 SessionService — new stateless design
 
@@ -83,6 +86,9 @@ health(name)                → hasSession(session-{name})
 - No event processing
 - No current_task tracking
 - `spawn` still supports `cwd` parameter
+- `spawn` does NOT support `env` — env injection moves to foreman (bake into command or use tmux `set-environment`)
+- Name collisions return a clean error (check `hasSession` before creating). Tmux errors are caught and translated to meaningful HTTP responses.
+- `sendTask` to a dead session returns the tmux error as a 500/410 — no semantic status codes like 409. Foreman (the consumer) handles retry/status logic.
 
 ### Session routes — updated
 
@@ -113,7 +119,7 @@ Session object becomes simpler:
 
 ### Frontend changes
 
-- Remove: Sessions page, Callback page, ProtectedRoute, ConfirmModal, TerminalViewerModal
+- Remove: SessionsPage, CallbackPage, AgentsPage, ProtectedRoute, ConfirmDialog, TerminalViewer
 - Remove: Auth SDK integration, auth flow, `lib/auth.js`, `lib/api.js`
 - Remove: Protected route guard
 - Simplify Sidebar: remove login/logout, remove Sessions nav link
@@ -210,7 +216,7 @@ The `tmux_api_url` field on sessions allows foreman to manage sessions across mu
 
 ## Migration Plan
 
-### Phase 1: tmux-api (modify this repo)
+### Phase 1: tmux-api (modify this repo, starting from v0.11.0)
 
 1. Rename repo from `foreman` to `tmux-api`
 2. Rewrite SessionService to be stateless
