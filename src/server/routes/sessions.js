@@ -38,7 +38,7 @@ export async function sessionRoutes(fastify) {
         type: 'object',
         required: ['name'],
         properties: {
-          name: { type: 'string', minLength: 1 },
+          name: { type: 'string', minLength: 1, maxLength: 128, pattern: '^[a-zA-Z0-9_-]+$' },
         },
       },
       response: {
@@ -72,7 +72,7 @@ export async function sessionRoutes(fastify) {
         type: 'object',
         required: ['newName'],
         properties: {
-          newName: { type: 'string', minLength: 1 },
+          newName: { type: 'string', minLength: 1, maxLength: 128, pattern: '^[a-zA-Z0-9_-]+$' },
         },
       },
     },

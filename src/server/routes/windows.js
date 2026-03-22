@@ -33,7 +33,7 @@ export async function windowRoutes(fastify) {
       body: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
+          name: { type: 'string', maxLength: 128, pattern: '^[a-zA-Z0-9_-]+$' },
         },
       },
     },
@@ -52,7 +52,7 @@ export async function windowRoutes(fastify) {
         type: 'object',
         required: ['newName'],
         properties: {
-          newName: { type: 'string', minLength: 1 },
+          newName: { type: 'string', minLength: 1, maxLength: 128, pattern: '^[a-zA-Z0-9_-]+$' },
         },
       },
     },

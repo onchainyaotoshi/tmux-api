@@ -92,7 +92,7 @@ export async function paneRoutes(fastify) {
         type: 'object',
         required: ['keys'],
         properties: {
-          keys: { type: 'string' },
+          keys: { type: 'string', maxLength: 4096 },
         },
       },
     },
