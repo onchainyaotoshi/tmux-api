@@ -11,7 +11,7 @@ graph TB
     subgraph Server["tmux-api Server :9993"]
         direction TB
         Auth["Auth Plugin<br/>API Key validation"]
-        Swagger["Swagger UI<br/>/docs"]
+        Swagger["Scalar API Docs<br/>/docs"]
         RateLimit["Rate Limiter<br/>100 req/min"]
 
         subgraph Routes["API Routes /api/*"]
@@ -135,9 +135,9 @@ X-API-Key: your-api-key
 | POST | `.../:w/panes/:p/send-keys` | `{keys}` | Send keys |
 | GET | `.../:w/panes/:p/capture` | - | Capture output |
 
-### Swagger UI
+### API Docs
 
-Open `http://localhost:9993/docs` for interactive API documentation.
+Open `http://localhost:9993/docs` for interactive API documentation (Scalar).
 
 ## Usage Examples
 
@@ -177,7 +177,7 @@ tmux-api/
 │   │   ├── index.js              # Fastify entry point
 │   │   ├── plugins/
 │   │   │   ├── auth.js           # API key + Bearer token auth
-│   │   │   └── swagger.js        # Swagger/OpenAPI
+│   │   │   └── swagger.js        # OpenAPI + Scalar docs
 │   │   ├── routes/
 │   │   │   ├── terminals.js      # Terminal endpoints (L1)
 │   │   │   ├── sessions.js       # Session endpoints (L2)

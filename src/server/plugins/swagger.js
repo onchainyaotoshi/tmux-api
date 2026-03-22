@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin'
 import swagger from '@fastify/swagger'
-import swaggerUi from '@fastify/swagger-ui'
+import scalarUi from '@scalar/fastify-api-reference'
 
 async function swaggerPlugin(fastify, opts) {
   if (opts.enabled === false) return
@@ -8,22 +8,18 @@ async function swaggerPlugin(fastify, opts) {
   await fastify.register(swagger, {
     openapi: {
       info: {
-        title: 'Foreman API',
-        description: 'REST API for managing AI agent sessions via tmux terminals',
-        version: '1.0.0',
+        title: 'tmux-api',
+        description: 'Stateless REST API for controlling tmux remotely',
+        version: '0.12.0',
       },
       tags: [
         {
           name: 'L1 — Terminal (Low-level)',
-          description: 'Direct tmux terminal, window, and pane management. Use L2 Session endpoints for most use cases.',
+          description: 'Direct tmux terminal, window, and pane management.',
         },
         {
           name: 'L2 — Session',
-          description: 'Managed session instances with state tracking, events, and lifecycle management.',
-        },
-        {
-          name: 'L3 — Agent',
-          description: 'Agent definitions — reusable blueprints for spawning sessions.',
+          description: 'Stateless convenience wrapper over L1 terminals.',
         },
       ],
       components: {
@@ -39,7 +35,7 @@ async function swaggerPlugin(fastify, opts) {
     },
   })
 
-  await fastify.register(swaggerUi, {
+  await fastify.register(scalarUi, {
     routePrefix: '/docs',
   })
 }
