@@ -1,6 +1,6 @@
 {
   "name": "@yaotoshi/tmux-api",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Node.js SDK for tmux-api — control tmux sessions via REST",
   "type": "module",
   "main": "src/index.js",
