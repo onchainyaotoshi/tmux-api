@@ -61,6 +61,37 @@ sequenceDiagram
     F-->>C: 200 {success: true, data: {content: "..."}}
 ```
 
+## How It Works (Docker)
+
+```mermaid
+graph TB
+    subgraph Host["Host Machine"]
+        HostTmux["tmux ls → sees all sessions"]
+        TmpHost["/tmp/tmux-1000/default<br/>(tmux socket)"]
+
+        subgraph Container["Docker Container (node:20-alpine + tmux)"]
+            Fastify["Fastify :9993<br/>WORKDIR /app"]
+            TS["TerminalService"]
+            TmuxBin["tmux binary<br/>(apk add tmux)"]
+            TmpContainer["/tmp/tmux-1000/default"]
+
+            Fastify -->|"POST /api/sessions {name, cwd?}"| TS
+            TS -->|"execFile('tmux', ['new-session', ...])"| TmuxBin
+            TmuxBin --> TmpContainer
+        end
+
+        TmpContainer <-->|"volume mount<br/>/tmp:/tmp"| TmpHost
+        TmpHost --- HostTmux
+    end
+
+    Client["Client (SDK, curl)"] -->|"HTTP + X-API-Key"| Fastify
+```
+
+**Key points:**
+- tmux runs **inside the container** (installed via `apk add tmux`)
+- `/tmp:/tmp` volume mount shares the tmux socket — sessions created via API are visible on the host (`tmux ls`) and vice versa
+- Default working directory for new sessions is `/app` (container's WORKDIR). Pass `cwd` in the request body to override
+
 ## Quick Start
 
 ### Prerequisites
