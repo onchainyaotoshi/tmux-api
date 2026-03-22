@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { TerminalSquare, Eye, Wifi } from 'lucide-react'
+import { TerminalSquare, Eye, Wifi, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
@@ -17,7 +17,13 @@ const features = [
   {
     icon: Wifi,
     title: 'API',
-    description: 'Full REST API with Swagger docs. Integrate tmux-api into your automation pipeline.',
+    description: 'Full REST API with Scalar docs. Integrate tmux-api into your automation pipeline.',
+  },
+  {
+    icon: Package,
+    title: 'SDK',
+    description: 'npm install @yaotoshi/tmux-api — Node.js SDK with typed errors and retries.',
+    href: 'https://www.npmjs.com/package/@yaotoshi/tmux-api',
   },
 ]
 
@@ -42,16 +48,23 @@ export default function HomePage() {
         </a>
       </Button>
 
-      <div className="mt-16 grid w-full max-w-3xl gap-4 text-left sm:grid-cols-3">
-        {features.map(({ icon: Icon, title, description }) => (
-          <Card key={title} className="bg-card border-border">
-            <CardHeader>
-              <Icon className="mb-2 size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">{title}</CardTitle>
-              <CardDescription>{description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
+      <div className="mt-16 grid w-full max-w-3xl gap-4 text-left sm:grid-cols-2">
+        {features.map(({ icon: Icon, title, description, href }) => {
+          const content = (
+            <Card key={title} className="bg-card border-border hover:border-primary/50 transition-colors">
+              <CardHeader>
+                <Icon className="mb-2 size-5 text-primary" />
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+              </CardHeader>
+            </Card>
+          )
+          return href ? (
+            <a key={title} href={href} target="_blank" rel="noopener noreferrer">{content}</a>
+          ) : (
+            <div key={title}>{content}</div>
+          )
+        })}
       </div>
     </div>
   )
