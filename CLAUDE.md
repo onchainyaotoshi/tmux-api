@@ -120,6 +120,8 @@ See `.env.example` for full documentation.
 - **release/*** — release prep
 - **hotfix/*** — urgent production fixes
 
+**NEVER push directly to `main`.** All changes to main must go through a release or hotfix branch and be merged via PR. No direct commits, no force pushes.
+
 **Conventional commits required:** `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`
 
 Current version: **v1.2.0**
