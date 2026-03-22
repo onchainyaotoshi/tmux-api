@@ -21,6 +21,10 @@ async function swaggerPlugin(fastify, opts) {
           name: 'L2 — Session',
           description: 'Managed session instances with state tracking, events, and lifecycle management.',
         },
+        {
+          name: 'L3 — Agent',
+          description: 'Agent definitions — reusable blueprints for spawning sessions.',
+        },
       ],
       components: {
         securitySchemes: {

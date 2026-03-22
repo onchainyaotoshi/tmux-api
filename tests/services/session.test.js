@@ -25,6 +25,7 @@ afterEach(async () => {
   }
   db.db.exec('DELETE FROM session_events')
   db.db.exec('DELETE FROM sessions')
+  db.db.exec('DELETE FROM agents')
 })
 
 afterAll(() => {
@@ -116,6 +117,16 @@ describe('SessionService', () => {
 
       const alive = await tmux.hasSession(`${SESSION_PREFIX}test-w1`)
       expect(alive).toBe(true)
+    })
+
+    it('should spawn with env vars and agentId', async () => {
+      const agent = db.createAgent({ id: 'test-agent-id', name: 'test-agent', command: 'bash' })
+      const session = await sessionService.spawn('env-test', 'echo done', null, {
+        env: { MY_VAR: 'hello' },
+        agentId: agent.id,
+      })
+      expect(session.name).toBe('env-test')
+      expect(session.agent_id).toBe('test-agent-id')
     })
 
     it('should reject duplicate session names', async () => {
