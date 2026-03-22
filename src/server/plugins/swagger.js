@@ -13,14 +13,10 @@ async function swaggerPlugin(fastify, opts) {
         version: '0.12.0',
       },
       tags: [
-        {
-          name: 'L1 — Terminal (Low-level)',
-          description: 'Direct tmux terminal, window, and pane management.',
-        },
-        {
-          name: 'L2 — Session',
-          description: 'Stateless convenience wrapper over L1 terminals.',
-        },
+        { name: 'Terminals', description: 'Tmux session management' },
+        { name: 'Windows', description: 'Window management within terminals' },
+        { name: 'Panes', description: 'Pane management, send-keys, and capture' },
+        { name: 'Sessions', description: 'Convenience wrapper for common session operations' },
       ],
       components: {
         securitySchemes: {

@@ -20,7 +20,7 @@ export async function paneRoutes(fastify) {
 
   fastify.get('/terminals/:terminal/windows/:window/panes', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Panes'],
       summary: 'List panes in a window',
       params: paneParams,
     },
@@ -32,7 +32,7 @@ export async function paneRoutes(fastify) {
 
   fastify.post('/terminals/:terminal/windows/:window/panes', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Panes'],
       summary: 'Split pane',
       params: paneParams,
       body: {
@@ -52,7 +52,7 @@ export async function paneRoutes(fastify) {
 
   fastify.put('/terminals/:terminal/windows/:window/panes/:index/resize', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Panes'],
       summary: 'Resize a pane',
       params: paneIndexParams,
       body: {
@@ -73,7 +73,7 @@ export async function paneRoutes(fastify) {
 
   fastify.delete('/terminals/:terminal/windows/:window/panes/:index', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Panes'],
       summary: 'Kill a pane',
       params: paneIndexParams,
     },
@@ -85,7 +85,7 @@ export async function paneRoutes(fastify) {
 
   fastify.post('/terminals/:terminal/windows/:window/panes/:index/send-keys', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Panes'],
       summary: 'Send keys to a pane',
       params: paneIndexParams,
       body: {
@@ -104,7 +104,7 @@ export async function paneRoutes(fastify) {
 
   fastify.get('/terminals/:terminal/windows/:window/panes/:index/capture', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Panes'],
       summary: 'Capture pane output',
       params: paneIndexParams,
     },
