@@ -1,20 +1,32 @@
-import styles from './ConfirmModal.module.css'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 export default function ConfirmModal({ title, message, onConfirm, onCancel }) {
   return (
-    <div className={styles.overlay} onClick={onCancel}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.title}>{title}</div>
-        <div className={styles.message}>{message}</div>
-        <div className={styles.actions}>
-          <button className={`${styles.btn} ${styles.btnCancel}`} onClick={onCancel}>
-            No
-          </button>
-          <button className={`${styles.btn} ${styles.btnDanger}`} onClick={onConfirm}>
+    <AlertDialog open onOpenChange={(open) => !open && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onCancel}>No</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
             Yes, kill it
-          </button>
-        </div>
-      </div>
-    </div>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

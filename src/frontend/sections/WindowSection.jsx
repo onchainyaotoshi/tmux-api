@@ -1,7 +1,7 @@
 import Section from '../components/Section';
 import ShortcutTable from '../components/ShortcutTable';
 import TerminalSimulator from '../components/TerminalSimulator';
-import ts from '../components/TerminalSimulator.module.css';
+import ts from '../components/terminal-styles.js';
 
 const shortcuts = [
   { key: 'Ctrl+B c', description: 'Buat window baru' },
