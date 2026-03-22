@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Eye } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { apiFetch } from '../lib/api.js'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,8 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import ConfirmModal from '../components/ConfirmModal.jsx'
-import TerminalViewerModal from '../components/TerminalViewerModal.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import TerminalViewer from '../components/TerminalViewer.jsx'
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState([])
@@ -55,25 +55,17 @@ export default function SessionsPage() {
   }
 
   return (
-    <div className="max-w-3xl">
-      {/* Terminal prompt header */}
+    <div>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-mono text-lg">
-          <span className="text-primary">user@foreman</span>
-          <span className="text-muted-foreground">:</span>
-          <span className="text-secondary">~/sessions</span>
-          <span className="text-muted-foreground">$ </span>
-          <span className="animate-blink">█</span>
-        </h2>
+        <h1 className="text-2xl font-semibold tracking-tight">Sessions</h1>
         <Button
           variant="outline"
           size="sm"
           onClick={fetchSessions}
           disabled={loading}
-          className="border-primary/30 text-primary hover:bg-primary/10 font-mono text-xs"
         >
-          <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
-          {loading ? 'loading...' : '↻ refresh'}
+          <RefreshCw className={loading ? 'animate-spin' : ''} />
+          Refresh
         </Button>
       </div>
 
@@ -84,44 +76,44 @@ export default function SessionsPage() {
       )}
 
       {sessions.length === 0 && !loading ? (
-        <p className="py-10 text-center font-mono text-muted-foreground">
-          &gt; no active sessions. create one to get started.
-          <span className="animate-blink">_</span>
+        <p className="py-10 text-center text-muted-foreground">
+          No active sessions
         </p>
       ) : (
-        <div className="rounded-lg border border-primary/20 overflow-hidden">
+        <div className="rounded-lg border border-border">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-primary/15 hover:bg-transparent">
-                <TableHead className="text-primary font-mono text-xs uppercase tracking-wider">Name</TableHead>
-                <TableHead className="text-primary font-mono text-xs uppercase tracking-wider">Windows</TableHead>
-                <TableHead className="text-primary font-mono text-xs uppercase tracking-wider">Created</TableHead>
-                <TableHead className="w-[180px]"></TableHead>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Windows</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="w-[160px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sessions.map((s) => (
-                <TableRow key={s.name} className="border-b border-border/50 hover:bg-accent/30">
-                  <TableCell className="font-mono text-foreground">{s.name}</TableCell>
-                  <TableCell className="font-mono text-secondary">{s.windows}</TableCell>
-                  <TableCell className="font-mono text-muted-foreground text-xs">{formatDate(s.created)}</TableCell>
+                <TableRow key={s.name}>
+                  <TableCell className="font-mono">{s.name}</TableCell>
+                  <TableCell>{s.windows}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {formatDate(s.created)}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setViewTarget(s.name)}
-                        className="border-primary/30 text-primary hover:bg-primary/10 font-mono text-xs"
                       >
-                        ▸ view
+                        View
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
+                        className="text-destructive hover:text-destructive"
                         onClick={() => setKillTarget(s.name)}
-                        className="border-destructive/30 text-destructive hover:bg-destructive/10 font-mono text-xs"
                       >
-                        × kill
+                        Kill
                       </Button>
                     </div>
                   </TableCell>
@@ -133,7 +125,7 @@ export default function SessionsPage() {
       )}
 
       {killTarget && (
-        <ConfirmModal
+        <ConfirmDialog
           title="Kill Session"
           message={`Are you sure you want to kill session "${killTarget}"?`}
           onConfirm={handleKill}
@@ -142,7 +134,7 @@ export default function SessionsPage() {
       )}
 
       {viewTarget && (
-        <TerminalViewerModal
+        <TerminalViewer
           sessionName={viewTarget}
           onClose={() => setViewTarget(null)}
         />

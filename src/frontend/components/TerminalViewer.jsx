@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-export default function TerminalViewerModal({ sessionName, onClose }) {
+export default function TerminalViewer({ sessionName, onClose }) {
   const [windows, setWindows] = useState([])
   const [selectedWindow, setSelectedWindow] = useState(null)
   const [panes, setPanes] = useState([])
@@ -34,7 +34,6 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
       const res = await apiFetch(`/terminals/${sessionName}/windows/${win}/panes/${pane}/capture`)
       if (!res) return
       setOutput(res.data.content)
-      // Auto-scroll to bottom
       setTimeout(() => {
         if (outputRef.current) {
           outputRef.current.scrollTop = outputRef.current.scrollHeight
@@ -100,9 +99,11 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl border-primary/20 bg-card">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="font-mono text-primary">Session: {sessionName}</DialogTitle>
+          <DialogTitle>
+            Session: <span className="font-mono">{sessionName}</span>
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex items-center gap-4">
@@ -145,6 +146,17 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
               </SelectContent>
             </Select>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchOutput(selectedWindow, selectedPane)}
+            disabled={loading || selectedWindow === null || selectedPane === null}
+            className="ml-auto"
+          >
+            <RefreshCw className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </Button>
         </div>
 
         {error && (
@@ -158,24 +170,11 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
         ) : (
           <pre
             ref={outputRef}
-            className="font-mono text-sm bg-[#000000] text-[#33ff77] p-4 rounded-lg max-h-[60vh] overflow-auto border border-primary/10"
+            className="rounded-lg border border-border bg-background p-4 font-mono text-sm text-foreground max-h-[60vh] overflow-auto"
           >
             {loading ? 'Loading...' : output || '\n'}
           </pre>
         )}
-
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fetchOutput(selectedWindow, selectedPane)}
-            disabled={loading || selectedWindow === null || selectedPane === null}
-            className="border-primary/30 text-primary hover:bg-primary/10 font-mono text-xs"
-          >
-            <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
-            ↻ refresh
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   )
