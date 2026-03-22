@@ -10,6 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:9993',
+      '/auth/proxy': 'http://localhost:9993',
       '/docs': 'http://localhost:9993',
     },
   },
