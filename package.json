@@ -1,7 +1,7 @@
 {
   "name": "tmux-api",
   "private": true,
-  "version": "0.12.1",
+  "version": "0.12.2",
   "type": "module",
   "scripts": {
     "start": "node src/server/index.js",
