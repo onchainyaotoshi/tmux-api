@@ -1,0 +1,26 @@
+{
+  "name": "@yaotoshi/tmux-api",
+  "version": "0.1.0",
+  "description": "Node.js SDK for tmux-api — control tmux sessions via REST",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "engines": { "node": ">=18" },
+  "files": ["src/"],
+  "keywords": ["tmux", "api", "sdk", "terminal", "session"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onchainyaotoshi/tmux-api",
+    "directory": "packages/sdk"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  }
+}
