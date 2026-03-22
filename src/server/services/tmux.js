@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import { access } from 'node:fs/promises'
 
 const execFileAsync = promisify(execFile)
 
@@ -42,8 +43,17 @@ export class TmuxService {
     }
   }
 
-  async createSession(name) {
-    await this.execute('new-session', ['-d', '-s', name])
+  async createSession(name, cwd) {
+    const args = ['-d', '-s', name]
+    if (cwd) {
+      try {
+        await access(cwd)
+      } catch {
+        throw new Error(`cwd does not exist: ${cwd}`)
+      }
+      args.push('-c', cwd)
+    }
+    await this.execute('new-session', args)
     return { name }
   }
 

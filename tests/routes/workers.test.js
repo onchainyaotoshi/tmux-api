@@ -35,6 +35,7 @@ afterEach(async () => {
   for (const w of workers) {
     try { await tmux.killSession(`${WORKER_PREFIX}${w.name}`) } catch {}
   }
+  db.db.exec('DELETE FROM worker_events')
   db.db.exec('DELETE FROM workers')
 })
 
@@ -217,5 +218,81 @@ describe('GET /api/workers/:id/health', () => {
     })
     expect(res.statusCode).toBe(200)
     expect(res.json().data.alive).toBe(true)
+  })
+})
+
+describe('POST /api/workers with cwd', () => {
+  it('should spawn worker with cwd', async () => {
+    const res = await app.inject({
+      method: 'POST', url: '/api/workers', headers,
+      payload: { name: 'cwd-route-test', command: 'bash', cwd: '/tmp' },
+    })
+    expect(res.statusCode).toBe(201)
+    expect(res.json().data.cwd).toBe('/tmp')
+    expect(res.json().data.event_token).toBeDefined()
+  })
+
+  it('should reject non-absolute cwd', async () => {
+    const res = await app.inject({
+      method: 'POST', url: '/api/workers', headers,
+      payload: { name: 'cwd-relative', command: 'bash', cwd: 'relative/path' },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('should accept spawn without cwd', async () => {
+    const res = await app.inject({
+      method: 'POST', url: '/api/workers', headers,
+      payload: { name: 'no-cwd-route', command: 'bash' },
+    })
+    expect(res.statusCode).toBe(201)
+    expect(res.json().data.cwd).toBeNull()
+  })
+})
+
+describe('GET /api/workers with new statuses', () => {
+  it('should filter by waiting_input status', async () => {
+    const created = await app.inject({
+      method: 'POST', url: '/api/workers', headers,
+      payload: { name: 'status-filter', command: 'bash' },
+    })
+    const { id } = created.json().data
+    await workerService.processEvent(id, 'notification', { message: 'confirm?' })
+
+    const res = await app.inject({
+      method: 'GET', url: '/api/workers?status=waiting_input', headers,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().data.length).toBeGreaterThanOrEqual(1)
+    expect(res.json().data.every(w => w.status === 'waiting_input')).toBe(true)
+  })
+})
+
+describe('GET /api/workers/:id with last_event', () => {
+  it('should include last_event in detail', async () => {
+    const created = await app.inject({
+      method: 'POST', url: '/api/workers', headers,
+      payload: { name: 'detail-evt', command: 'bash' },
+    })
+    const { id } = created.json().data
+    await workerService.processEvent(id, 'notification', { message: 'test' })
+
+    const res = await app.inject({
+      method: 'GET', url: `/api/workers/${id}`, headers,
+    })
+    expect(res.json().data.last_event).toBeDefined()
+    expect(res.json().data.last_event.type).toBe('notification')
+  })
+
+  it('should have null last_event when no events', async () => {
+    const created = await app.inject({
+      method: 'POST', url: '/api/workers', headers,
+      payload: { name: 'detail-no-evt', command: 'bash' },
+    })
+    const { id } = created.json().data
+    const res = await app.inject({
+      method: 'GET', url: `/api/workers/${id}`, headers,
+    })
+    expect(res.json().data.last_event).toBeNull()
   })
 })

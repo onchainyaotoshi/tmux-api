@@ -17,6 +17,7 @@ import { DatabaseService } from './services/database.js'
 import { WorkerService } from './services/worker.js'
 import { workerRoutes } from './routes/workers.js'
 import { healthRoutes } from './routes/health.js'
+import { eventRoutes } from './routes/events.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT || '9993', 10)
@@ -74,6 +75,7 @@ await app.register(windowRoutes, { prefix: '/api' })
 await app.register(paneRoutes, { prefix: '/api' })
 await app.register(workerRoutes, { prefix: '/api' })
 await app.register(healthRoutes, { prefix: '/api' })
+await app.register(eventRoutes, { prefix: '/api' })
 
 // Serve static frontend (only if dist/ exists)
 const distPath = join(__dirname, '../../dist')

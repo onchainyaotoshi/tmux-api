@@ -21,18 +21,34 @@ export class DatabaseService {
         command TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'idle',
         current_task TEXT,
+        cwd TEXT,
+        event_token TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
     `)
+
+    // Migration for existing databases that lack new columns
+    try { this.db.exec('ALTER TABLE workers ADD COLUMN cwd TEXT') } catch {}
+    try { this.db.exec('ALTER TABLE workers ADD COLUMN event_token TEXT') } catch {}
+
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS worker_events (
+        id TEXT PRIMARY KEY,
+        worker_id TEXT NOT NULL REFERENCES workers(id),
+        type TEXT NOT NULL,
+        data TEXT,
+        created_at TEXT NOT NULL
+      )
+    `)
   }
 
-  createWorker({ id, name, command, status = 'idle' }) {
+  createWorker({ id, name, command, status = 'idle', cwd = null, event_token = null }) {
     const now = new Date().toISOString()
     this.db.prepare(`
-      INSERT INTO workers (id, name, command, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, name, command, status, now, now)
+      INSERT INTO workers (id, name, command, status, cwd, event_token, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name, command, status, cwd, event_token, now, now)
     return this.getWorker(id)
   }
 
@@ -57,6 +73,40 @@ export class DatabaseService {
     const now = new Date().toISOString()
     this.db.prepare('UPDATE workers SET current_task = ?, status = ?, updated_at = ? WHERE id = ?')
       .run(task, 'running', now, id)
+  }
+
+  createEvent({ id, worker_id, type, data }) {
+    const now = new Date().toISOString()
+    const dataStr = data ? JSON.stringify(data) : null
+    this.db.prepare(`
+      INSERT INTO worker_events (id, worker_id, type, data, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(id, worker_id, type, dataStr, now)
+    return this.getEvent(id)
+  }
+
+  getEvent(id) {
+    const row = this.db.prepare('SELECT * FROM worker_events WHERE id = ?').get(id)
+    if (row && row.data) row.data = JSON.parse(row.data)
+    return row
+  }
+
+  getLastEvent(workerId) {
+    const row = this.db.prepare(
+      'SELECT * FROM worker_events WHERE worker_id = ? ORDER BY created_at DESC LIMIT 1'
+    ).get(workerId)
+    if (row && row.data) row.data = JSON.parse(row.data)
+    return row
+  }
+
+  listEvents(workerId, limit = 50) {
+    const rows = this.db.prepare(
+      'SELECT * FROM worker_events WHERE worker_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?'
+    ).all(workerId, limit)
+    return rows.map(row => {
+      if (row.data) row.data = JSON.parse(row.data)
+      return row
+    })
   }
 
   close() {
