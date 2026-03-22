@@ -1,5 +1,5 @@
 services:
-  tmux-management:
+  foreman:
     build: .
     ports:
       - "127.0.0.1:${PORT:-9997}:${PORT:-9997}"

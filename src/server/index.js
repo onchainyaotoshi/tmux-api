@@ -75,7 +75,7 @@ if (existsSync(distPath)) {
 try {
   // 0.0.0.0 inside container; docker-compose binds 127.0.0.1 on host side
   await app.listen({ port: PORT, host: '0.0.0.0' })
-  console.log(`Tmux Management API running on port ${PORT}`)
+  console.log(`Foreman API running on port ${PORT}`)
   if (SWAGGER_ENABLED) {
     console.log(`Swagger UI: http://localhost:${PORT}/docs`)
   }

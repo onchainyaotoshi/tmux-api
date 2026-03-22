@@ -8,7 +8,7 @@ async function swaggerPlugin(fastify, opts) {
   await fastify.register(swagger, {
     openapi: {
       info: {
-        title: 'Tmux Management API',
+        title: 'Foreman API',
         description: 'REST API for controlling tmux sessions, windows, and panes',
         version: '1.0.0',
       },
