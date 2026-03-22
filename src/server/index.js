@@ -3,23 +3,17 @@ import fastifyStatic from '@fastify/static'
 import rateLimit from '@fastify/rate-limit'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import 'dotenv/config'
 
 import { TerminalService } from './services/terminal.js'
+import { SessionService } from './services/session.js'
 import { authPlugin } from './plugins/auth.js'
 import { swaggerSetup } from './plugins/swagger.js'
 import { terminalRoutes } from './routes/terminals.js'
 import { windowRoutes } from './routes/windows.js'
 import { paneRoutes } from './routes/panes.js'
-import { authProxyRoutes } from './routes/authProxy.js'
-import { DatabaseService } from './services/database.js'
-import { SessionService } from './services/session.js'
 import { sessionRoutes } from './routes/sessions.js'
-import { AgentService } from './services/agent.js'
-import { agentRoutes } from './routes/agents.js'
-import { healthRoutes } from './routes/health.js'
-import { eventRoutes } from './routes/events.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT || '9993', 10)
@@ -34,20 +28,10 @@ if (!API_KEY) {
 
 const app = Fastify({ logger: true })
 
-// Decorate with TerminalService
-app.decorate('terminal', new TerminalService())
-
-// Database + SessionService
-const dataDir = join(__dirname, '../../data')
-mkdirSync(dataDir, { recursive: true })
-const db = new DatabaseService(join(dataDir, 'foreman.db'))
-db.init()
-app.decorate('db', db)
-app.decorate('sessionService', new SessionService(app.terminal, db))
-app.decorate('agentService', new AgentService(db, app.sessionService))
-
-// Graceful shutdown
-app.addHook('onClose', () => db.close())
+// Decorate with services
+const terminal = new TerminalService()
+app.decorate('terminal', terminal)
+app.decorate('sessionService', new SessionService(terminal))
 
 // Global error handler for tmux errors
 app.setErrorHandler((error, request, reply) => {
@@ -57,9 +41,6 @@ app.setErrorHandler((error, request, reply) => {
     error: error.message,
   })
 })
-
-// Auth proxy (public, must be registered before auth plugin)
-await app.register(authProxyRoutes, { prefix: '/auth/proxy' })
 
 // Plugins
 await app.register(swaggerSetup, { enabled: SWAGGER_ENABLED })
@@ -77,9 +58,6 @@ await app.register(terminalRoutes, { prefix: '/api' })
 await app.register(windowRoutes, { prefix: '/api' })
 await app.register(paneRoutes, { prefix: '/api' })
 await app.register(sessionRoutes, { prefix: '/api' })
-await app.register(healthRoutes, { prefix: '/api' })
-await app.register(eventRoutes, { prefix: '/api' })
-await app.register(agentRoutes, { prefix: '/api' })
 
 // Serve static frontend (only if dist/ exists)
 const distPath = join(__dirname, '../../dist')
@@ -101,9 +79,8 @@ if (existsSync(distPath)) {
 
 // Start server
 try {
-  // 0.0.0.0 inside container; docker-compose binds 127.0.0.1 on host side
   await app.listen({ port: PORT, host: '0.0.0.0' })
-  console.log(`Foreman API running on port ${PORT}`)
+  console.log(`tmux-api running on port ${PORT}`)
   if (SWAGGER_ENABLED) {
     console.log(`Swagger UI: http://localhost:${PORT}/docs`)
   }

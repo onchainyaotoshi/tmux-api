@@ -45,16 +45,6 @@ describe('authPlugin', () => {
     expect(res.statusCode).toBe(200)
   })
 
-  it('should skip auth for POST /api/sessions/:id/events', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/sessions/some-id/events?token=test',
-      payload: { type: 'test' },
-    })
-    // Should NOT be 401 — auth plugin should skip this route
-    // Will be 404 since no events route is registered, but NOT 401
-    expect(res.statusCode).not.toBe(401)
-  })
 })
 
 describe('authPlugin — Bearer token', () => {
