@@ -1,0 +1,235 @@
+# Foreman
+
+REST API server untuk kontrol tmux secara remote. Deploy server, hit endpoint dari bahasa/tool apapun.
+
+## Architecture
+
+```mermaid
+graph TB
+    Client["Client (curl, SDK, Agent)"] -->|HTTP + X-API-Key| Foreman
+
+    subgraph Foreman["Foreman Server :9997"]
+        direction TB
+        Auth["Auth Plugin<br/>API Key validation"]
+        Swagger["Swagger UI<br/>/docs"]
+        RateLimit["Rate Limiter<br/>100 req/min"]
+
+        subgraph Routes["API Routes /api/*"]
+            Sessions["Sessions<br/>CRUD"]
+            Windows["Windows<br/>CRUD"]
+            Panes["Panes<br/>CRUD + Control"]
+        end
+
+        Service["TmuxService<br/>execFile wrapper"]
+        Static["Static Frontend<br/>Tutorial + Docs"]
+    end
+
+    Service -->|execFile| Tmux["tmux binary"]
+    Tmux --> Terminal1["Session 1<br/>Claude Agent"]
+    Tmux --> Terminal2["Session 2<br/>Claude Agent"]
+    Tmux --> Terminal3["Session N<br/>..."]
+
+    Auth --> Routes
+    RateLimit --> Routes
+    Routes --> Service
+```
+
+## API Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant F as Foreman API
+    participant T as tmux
+
+    C->>F: POST /api/sessions {name: "worker-1"}
+    F->>F: Validate API Key
+    F->>T: tmux new-session -d -s worker-1
+    T-->>F: OK
+    F-->>C: 201 {success: true, data: {name: "worker-1"}}
+
+    C->>F: POST /api/.../panes/0/send-keys {keys: "claude --chat"}
+    F->>T: tmux send-keys -t worker-1:0.0 "claude --chat"
+    T-->>F: OK
+    F-->>C: 200 {success: true}
+
+    C->>F: GET /api/.../panes/0/capture
+    F->>T: tmux capture-pane -t worker-1:0.0 -p
+    T-->>F: pane content
+    F-->>C: 200 {success: true, data: {content: "..."}}
+```
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- tmux installed (`apt install tmux` / `apk add tmux`)
+
+### Local
+
+```bash
+git clone https://github.com/onchainyaotoshi/foreman.git
+cd foreman
+
+npm install
+cp .env.example .env   # edit API_KEY
+
+# Start server
+npm start
+
+# Or dev mode (auto-reload)
+npm run dev:server
+```
+
+### Docker
+
+```bash
+cp .env.example .env   # edit API_KEY
+docker compose up -d
+```
+
+Server berjalan di `http://127.0.0.1:9997` (localhost only).
+
+### Expose ke Internet
+
+```bash
+cloudflared tunnel --url http://localhost:9997
+```
+
+## API Endpoints
+
+### Authentication
+
+Semua `/api/*` endpoint butuh header:
+```
+X-API-Key: your-api-key
+```
+
+### Sessions
+
+| Method | Endpoint | Body | Description |
+|--------|----------|------|-------------|
+| GET | `/api/sessions` | - | List sessions |
+| POST | `/api/sessions` | `{name}` | Create session |
+| PUT | `/api/sessions/:name` | `{newName}` | Rename session |
+| DELETE | `/api/sessions/:name` | - | Kill session |
+
+### Windows
+
+| Method | Endpoint | Body | Description |
+|--------|----------|------|-------------|
+| GET | `/api/sessions/:s/windows` | - | List windows |
+| POST | `/api/sessions/:s/windows` | `{name?}` | Create window |
+| PUT | `/api/sessions/:s/windows/:i` | `{newName}` | Rename window |
+| DELETE | `/api/sessions/:s/windows/:i` | - | Kill window |
+
+### Panes
+
+| Method | Endpoint | Body | Description |
+|--------|----------|------|-------------|
+| GET | `.../:w/panes` | - | List panes |
+| POST | `.../:w/panes` | `{direction: "h"\|"v"}` | Split pane |
+| PUT | `.../:w/panes/:p/resize` | `{direction: "U"\|"D"\|"L"\|"R", amount}` | Resize |
+| DELETE | `.../:w/panes/:p` | - | Kill pane |
+| POST | `.../:w/panes/:p/send-keys` | `{keys}` | Send keys |
+| GET | `.../:w/panes/:p/capture` | - | Capture output |
+
+### Swagger UI
+
+Buka `http://localhost:9997/docs` untuk interactive API documentation.
+
+## Usage Examples
+
+```bash
+API="http://localhost:9997"
+KEY="your-api-key"
+
+# Create a session
+curl -X POST $API/api/sessions \
+  -H "X-API-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"worker-1"}'
+
+# Split pane horizontally
+curl -X POST $API/api/sessions/worker-1/windows/0/panes \
+  -H "X-API-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"direction":"h"}'
+
+# Send command to pane
+curl -X POST $API/api/sessions/worker-1/windows/0/panes/0/send-keys \
+  -H "X-API-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"keys":"echo hello"}'
+
+# Capture pane output
+curl -s $API/api/sessions/worker-1/windows/0/panes/0/capture \
+  -H "X-API-Key: $KEY" | jq .data.content
+```
+
+## Project Structure
+
+```
+foreman/
+├── src/
+│   ├── server/
+│   │   ├── index.js              # Fastify entry point
+│   │   ├── plugins/
+│   │   │   ├── auth.js           # API key auth
+│   │   │   └── swagger.js        # Swagger/OpenAPI
+│   │   ├── routes/
+│   │   │   ├── sessions.js       # Session endpoints
+│   │   │   ├── windows.js        # Window endpoints
+│   │   │   └── panes.js          # Pane + control endpoints
+│   │   └── services/
+│   │       └── tmux.js           # TmuxService (execFile wrapper)
+│   ├── frontend/                  # React tutorial app
+│   └── index.css
+├── tests/                         # Vitest test suites
+├── .env.example
+├── Dockerfile
+├── docker-compose.yml
+└── package.json
+```
+
+## Development
+
+```bash
+npm run dev:server    # Server with auto-reload
+npm run dev:frontend  # Vite dev server (frontend only)
+npm run build         # Build frontend
+npm test              # Run tests
+npm run test:watch    # Watch mode
+```
+
+## Git Flow
+
+```mermaid
+gitgraph
+    commit id: "v0.1.0"
+    branch develop
+    commit id: "feature work"
+    branch feature/new-feature
+    commit id: "feat: ..."
+    checkout develop
+    merge feature/new-feature
+    branch release/v0.2.0
+    commit id: "version bump"
+    checkout main
+    merge release/v0.2.0 tag: "v0.2.0"
+    checkout develop
+    merge release/v0.2.0
+```
+
+- **main** — production releases only
+- **develop** — integration branch
+- **feature/*** — new features (from develop)
+- **release/*** — release prep (develop → main)
+- **hotfix/*** — urgent fixes (from main)
+
+Commits harus conventional: `feat:`, `fix:`, `docs:`, `chore:`, dll.
+
+## License
+
+MIT
