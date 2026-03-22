@@ -16,12 +16,19 @@ A higher-level abstraction on top of Foreman's existing tmux API that simplifies
 States:  spawning → idle → running → failed → stopped
 
 Transitions:
-  POST /api/workers          → spawning → idle
+  POST /api/workers          → spawning → idle (optimistic: immediate after createSession + sendKeys succeed)
   POST /api/workers/:id/task → idle|running → running
   Worker process exits       → running → failed (detected by health check)
   DELETE /api/workers/:id    → any → stopped
   Auto-recovery (phase 2)    → failed → spawning
+
+Invalid transitions (return 409 Conflict):
+  Send task to stopped worker
+  Send task to failed worker (must be recovered first)
+  Delete already-stopped worker
 ```
+
+**Spawning → Idle transition:** Optimistic. Once `createSession` and `sendKeys(command + Enter)` succeed without error, status moves to `idle` immediately. There is no output polling to confirm the command started — that is Phase 2 orchestrator territory.
 
 ### SQLite Schema
 
@@ -36,49 +43,60 @@ Single `workers` table:
 | current_task  | TEXT    | Nullable — last input sent via send-keys   |
 | created_at    | TEXT    | ISO 8601 timestamp                         |
 | updated_at    | TEXT    | ISO 8601 timestamp                         |
-| retry_count   | INTEGER | Default 0, used in phase 2                 |
-| max_retries   | INTEGER | Default 3, used in phase 2                 |
-
-Database file: `data/foreman.db` (auto-created, gitignored).
+Database file: `data/foreman.db` (auto-created). Must add `data/` to `.gitignore`.
 
 ### REST API Endpoints
 
 ```
 POST   /api/workers              → Spawn worker
-  Body: { name, command, args? }
-  Response: { id, name, command, status: "spawning" }
+  Body: { name, command }
+  Validation:
+    name: pattern ^[a-zA-Z0-9_-]+$, minLength 1, maxLength 128
+    command: minLength 1, maxLength 4096
+  Response 201: { id, name, command, status: "idle" }
 
 GET    /api/workers              → List all workers + status
   Query: ?status=running (optional filter)
-  Response: [{ id, name, command, status, current_task, created_at }]
+  Response 200: [{ id, name, command, status, current_task, created_at }]
 
 GET    /api/workers/:id          → Worker detail + recent output
-  Response: { id, name, command, status, current_task, output, created_at }
+  Response 200: { id, name, command, status, current_task, output, created_at }
   (output = captured pane content)
 
 POST   /api/workers/:id/task     → Send task to worker
   Body: { input }
-  Response: { id, status: "running", current_task: input }
+  Validation: input maxLength 4096
+  Response 200: { id, status: "running", current_task: input }
+  Response 409: worker is stopped or failed
 
 DELETE /api/workers/:id          → Kill worker
-  Response: { id, status: "stopped" }
+  Response 200: { id, status: "stopped" }
+  Response 404: worker not found
 
 GET    /api/workers/:id/health   → Health check single worker
-  Response: { id, status, alive: bool, last_activity_at }
+  Response 200: { id, status, alive: bool, last_activity_at }
 
-GET    /api/workers/health       → Health check all workers
-  Response: [{ id, name, status, alive, last_activity_at }]
+GET    /api/health/workers       → Health check all workers
+  Response 200: [{ id, name, status, alive, last_activity_at }]
 ```
+
+**Error codes:** 400 (validation), 404 (worker not found), 409 (invalid state transition), 500 (database/tmux failure).
+
+**Route ordering note:** Bulk health endpoint uses `/api/health/workers` instead of `/api/workers/health` to avoid collision with the parametric `/:id` route.
 
 ### Internal Mapping (Worker → Tmux)
 
 | Worker Action | TmuxService Call |
 |---------------|------------------|
-| Spawn         | `createSession("worker-{name}")` + `sendKeys(command)` |
-| Send task     | `sendKeys(input)` to pane 0, window 0 |
+| Spawn         | `createSession("worker-{name}")` + `sendKeys(command + " Enter")` |
+| Send task     | `sendKeys(input + " Enter")` to pane 0, window 0 |
 | Get output    | `capturePane()` |
 | Kill          | `killSession()` |
-| Health check  | `listSessions()`, check if `worker-{name}` exists |
+| Health check  | `hasSession("worker-{name}")` (add `has-session` to ALLOWED_SUBCOMMANDS) |
+
+**Important:** `sendKeys` must append tmux `Enter` literal to execute commands. Without it, text is typed but never submitted.
+
+**`has-session` optimization:** O(1) check vs O(n) `listSessions` + filter. Requires adding `has-session` to the whitelist in `tmux.js`.
 
 ### Architecture & File Structure
 
@@ -118,6 +136,8 @@ data/
 - All responses follow existing envelope pattern: `{ success: true, data: ... }`.
 - All routes include JSON Schema for validation and Swagger auto-generation.
 - `better-sqlite3` chosen over JSON file for atomic writes, crash safety, and query capability.
+- Use `crypto.randomUUID()` (Node.js 20+ built-in) instead of `uuid` package.
+- Stopped workers remain in database for history. Phase 2 orchestrator can add purge logic.
 
 ## Phase 2: Autonomous Orchestrator
 
@@ -172,6 +192,8 @@ POST   /api/orchestrator/stop         → Stop the monitor loop
 
 Default config: `min_workers=0`, `max_workers=10`, `health_interval=30000`, `default_command=claude`.
 
+**Note:** Phase 2 may use environment variables instead of this table if runtime mutability is not needed. Decision deferred.
+
 ### Orchestrator Flow
 
 ```
@@ -184,12 +206,22 @@ Task submitted → queued in tasks table
   → If retries exhausted → mark worker failed, re-queue task for another worker
 ```
 
+### Additional SQLite Tables (Phase 2)
+
+**workers table additions (migration):**
+
+| Column        | Type    | Notes                                      |
+|---------------|---------|--------------------------------------------|
+| retry_count   | INTEGER | Default 0                                  |
+| max_retries   | INTEGER | Default 3                                  |
+
+These columns are added in Phase 2 via migration, not Phase 1. YAGNI.
+
 ## Dependencies
 
 | Package        | Purpose                    | Phase |
 |----------------|----------------------------|-------|
 | better-sqlite3 | SQLite persistence         | 1     |
-| uuid           | Worker ID generation       | 1     |
 
 ## What This Spec Does NOT Cover
 
