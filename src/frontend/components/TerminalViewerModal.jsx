@@ -31,7 +31,7 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
     try {
       setLoading(true)
       setError(null)
-      const res = await apiFetch(`/sessions/${sessionName}/windows/${win}/panes/${pane}/capture`)
+      const res = await apiFetch(`/terminals/${sessionName}/windows/${win}/panes/${pane}/capture`)
       if (!res) return
       setOutput(res.data.content)
       // Auto-scroll to bottom
@@ -49,7 +49,7 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
 
   const fetchPanes = useCallback(async (win) => {
     try {
-      const res = await apiFetch(`/sessions/${sessionName}/windows/${win}/panes`)
+      const res = await apiFetch(`/terminals/${sessionName}/windows/${win}/panes`)
       if (!res) return
       setPanes(res.data)
       const firstPane = res.data.length > 0 ? String(res.data[0].index) : null
@@ -67,7 +67,7 @@ export default function TerminalViewerModal({ sessionName, onClose }) {
   useEffect(() => {
     async function init() {
       try {
-        const res = await apiFetch(`/sessions/${sessionName}/windows`)
+        const res = await apiFetch(`/terminals/${sessionName}/windows`)
         if (!res) return
         setWindows(res.data)
         if (res.data.length > 0) {
