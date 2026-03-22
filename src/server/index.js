@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path'
 import { existsSync, mkdirSync } from 'node:fs'
 import 'dotenv/config'
 
-import { TmuxService } from './services/tmux.js'
+import { TerminalService } from './services/terminal.js'
 import { authPlugin } from './plugins/auth.js'
 import { swaggerSetup } from './plugins/swagger.js'
 import { sessionRoutes } from './routes/sessions.js'
@@ -32,8 +32,8 @@ if (!API_KEY) {
 
 const app = Fastify({ logger: true })
 
-// Decorate with TmuxService
-app.decorate('tmux', new TmuxService())
+// Decorate with TerminalService
+app.decorate('terminal', new TerminalService())
 
 // Database + WorkerService
 const dataDir = join(__dirname, '../../data')
@@ -41,7 +41,7 @@ mkdirSync(dataDir, { recursive: true })
 const db = new DatabaseService(join(dataDir, 'foreman.db'))
 db.init()
 app.decorate('db', db)
-app.decorate('workerService', new WorkerService(app.tmux, db))
+app.decorate('workerService', new WorkerService(app.terminal, db))
 
 // Graceful shutdown
 app.addHook('onClose', () => db.close())

@@ -1,5 +1,5 @@
 export async function paneRoutes(fastify) {
-  const { tmux } = fastify
+  const { terminal } = fastify
 
   const paneParams = {
     type: 'object',
@@ -26,7 +26,7 @@ export async function paneRoutes(fastify) {
     },
   }, async (request) => {
     const { session, window } = request.params
-    const data = await tmux.listPanes(session, parseInt(window, 10))
+    const data = await terminal.listPanes(session, parseInt(window, 10))
     return { success: true, data }
   })
 
@@ -45,7 +45,7 @@ export async function paneRoutes(fastify) {
     },
   }, async (request, reply) => {
     const { session, window } = request.params
-    await tmux.splitPane(session, parseInt(window, 10), request.body.direction)
+    await terminal.splitPane(session, parseInt(window, 10), request.body.direction)
     reply.code(201)
     return { success: true, data: null }
   })
@@ -67,7 +67,7 @@ export async function paneRoutes(fastify) {
   }, async (request) => {
     const { session, window, index } = request.params
     const { direction, amount } = request.body
-    await tmux.resizePane(session, parseInt(window, 10), parseInt(index, 10), direction, amount)
+    await terminal.resizePane(session, parseInt(window, 10), parseInt(index, 10), direction, amount)
     return { success: true, data: null }
   })
 
@@ -79,7 +79,7 @@ export async function paneRoutes(fastify) {
     },
   }, async (request) => {
     const { session, window, index } = request.params
-    await tmux.killPane(session, parseInt(window, 10), parseInt(index, 10))
+    await terminal.killPane(session, parseInt(window, 10), parseInt(index, 10))
     return { success: true, data: null }
   })
 
@@ -98,7 +98,7 @@ export async function paneRoutes(fastify) {
     },
   }, async (request) => {
     const { session, window, index } = request.params
-    await tmux.sendKeys(session, parseInt(window, 10), parseInt(index, 10), request.body.keys)
+    await terminal.sendKeys(session, parseInt(window, 10), parseInt(index, 10), request.body.keys)
     return { success: true, data: null }
   })
 
@@ -110,7 +110,7 @@ export async function paneRoutes(fastify) {
     },
   }, async (request) => {
     const { session, window, index } = request.params
-    const content = await tmux.capturePane(session, parseInt(window, 10), parseInt(index, 10))
+    const content = await terminal.capturePane(session, parseInt(window, 10), parseInt(index, 10))
     return { success: true, data: { content } }
   })
 }

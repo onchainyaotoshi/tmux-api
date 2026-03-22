@@ -11,7 +11,7 @@ const ALLOWED_SUBCOMMANDS = [
   'send-keys', 'capture-pane', 'has-session',
 ]
 
-export class TmuxService {
+export class TerminalService {
   async execute(subcommand, args = []) {
     if (!ALLOWED_SUBCOMMANDS.includes(subcommand)) {
       throw new Error(`Disallowed tmux subcommand: ${subcommand}`)

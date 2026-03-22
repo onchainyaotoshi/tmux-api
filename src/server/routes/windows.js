@@ -1,5 +1,5 @@
 export async function windowRoutes(fastify) {
-  const { tmux } = fastify
+  const { terminal } = fastify
 
   const sessionParam = {
     type: 'object',
@@ -21,7 +21,7 @@ export async function windowRoutes(fastify) {
       params: sessionParam,
     },
   }, async (request) => {
-    const data = await tmux.listWindows(request.params.session)
+    const data = await terminal.listWindows(request.params.session)
     return { success: true, data }
   })
 
@@ -38,7 +38,7 @@ export async function windowRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    await tmux.createWindow(request.params.session, request.body?.name)
+    await terminal.createWindow(request.params.session, request.body?.name)
     reply.code(201)
     return { success: true, data: null }
   })
@@ -58,7 +58,7 @@ export async function windowRoutes(fastify) {
     },
   }, async (request) => {
     const { session, index } = request.params
-    await tmux.renameWindow(session, parseInt(index, 10), request.body.newName)
+    await terminal.renameWindow(session, parseInt(index, 10), request.body.newName)
     return { success: true, data: null }
   })
 
@@ -70,7 +70,7 @@ export async function windowRoutes(fastify) {
     },
   }, async (request) => {
     const { session, index } = request.params
-    await tmux.killWindow(session, parseInt(index, 10))
+    await terminal.killWindow(session, parseInt(index, 10))
     return { success: true, data: null }
   })
 }

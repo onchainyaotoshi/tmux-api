@@ -1,5 +1,5 @@
 export async function sessionRoutes(fastify) {
-  const { tmux } = fastify
+  const { terminal } = fastify
 
   fastify.get('/sessions', {
     schema: {
@@ -26,7 +26,7 @@ export async function sessionRoutes(fastify) {
       },
     },
   }, async () => {
-    const data = await tmux.listSessions()
+    const data = await terminal.listSessions()
     return { success: true, data }
   })
 
@@ -55,7 +55,7 @@ export async function sessionRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    const data = await tmux.createSession(request.body.name)
+    const data = await terminal.createSession(request.body.name)
     reply.code(201)
     return { success: true, data }
   })
@@ -77,7 +77,7 @@ export async function sessionRoutes(fastify) {
       },
     },
   }, async (request) => {
-    await tmux.renameSession(request.params.name, request.body.newName)
+    await terminal.renameSession(request.params.name, request.body.newName)
     return { success: true, data: { name: request.body.newName } }
   })
 
@@ -91,7 +91,7 @@ export async function sessionRoutes(fastify) {
       },
     },
   }, async (request) => {
-    await tmux.killSession(request.params.name)
+    await terminal.killSession(request.params.name)
     return { success: true, data: null }
   })
 }
