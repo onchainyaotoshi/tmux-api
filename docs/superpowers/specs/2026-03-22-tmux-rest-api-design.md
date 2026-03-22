@@ -102,7 +102,7 @@ Response format konsisten:
 | GET | `/api/sessions/:session/windows/:window/panes` | — | List panes |
 | POST | `/api/sessions/:session/windows/:window/panes` | `{ direction: "h" \| "v" }` | Split pane |
 | DELETE | `/api/sessions/:session/windows/:window/panes/:index` | — | Kill pane |
-| PUT | `/api/sessions/:session/windows/:window/panes/:index/resize` | `{ direction, amount }` | Resize pane |
+| PUT | `/api/sessions/:session/windows/:window/panes/:index/resize` | `{ direction: "U"\|"D"\|"L"\|"R", amount: number }` | Resize pane |
 
 ### Control
 
@@ -129,7 +129,8 @@ Response format konsisten:
 - Tidak pernah interpolasi user input langsung ke shell
 
 ### Rate Limiting
-- `@fastify/rate-limit` untuk prevent abuse
+- `@fastify/rate-limit` — 100 requests/menit per API key (atau per IP jika tanpa key)
+- Berlaku hanya untuk `/api/*` routes
 
 ### Swagger Toggle
 - `SWAGGER_ENABLED=true|false` di `.env`
@@ -215,7 +216,12 @@ SWAGGER_ENABLED=true
 ```
 
 ### Tmux Socket Access
-Container mount `/tmp` untuk akses tmux socket host (default `/tmp/tmux-{uid}/`). `tmux` diinstall di dalam container via `apk add tmux`.
+API mengontrol tmux sessions **di dalam container** (bukan host). `tmux` diinstall via `apk add tmux` di dalam container. Container menjalankan tmux server sendiri — sessions hidup selama container hidup.
+
+Volume `/tmp` di-mount agar tmux socket persist jika container restart. Jika user ingin kontrol tmux host, mereka bisa jalankan server langsung di host tanpa Docker.
+
+### capturePane Output
+`GET .../capture` mengembalikan `{ success: true, data: { content: string } }` — raw text output dari pane, newline-separated lines.
 
 ## Scope Boundaries
 
