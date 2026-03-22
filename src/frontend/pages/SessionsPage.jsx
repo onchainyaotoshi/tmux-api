@@ -57,7 +57,7 @@ export default function SessionsPage() {
       <div className="mb-6 flex items-center justify-between">
         <h2 className="font-mono text-2xl font-bold">Sessions</h2>
         <Button variant="outline" size="sm" onClick={fetchSessions} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : ''} />
           {loading ? 'Loading...' : 'Refresh'}
         </Button>
       </div>

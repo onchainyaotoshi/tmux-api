@@ -12,9 +12,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 
 export default function Sidebar() {
   const isLoggedIn = auth.isAuthenticated()
@@ -23,12 +23,11 @@ export default function Sidebar() {
   return (
     <ShadcnSidebar>
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2 font-mono text-lg text-primary">
-          <TerminalSquare className="h-5 w-5" />
+        <div className="flex items-center gap-2 font-mono text-lg text-sidebar-primary">
+          <TerminalSquare />
           foreman
         </div>
       </SidebarHeader>
-      <Separator />
       <SidebarContent>
         {isLoggedIn && (
           <SidebarGroup>
@@ -38,7 +37,7 @@ export default function Sidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink to="/sessions">
-                      <MonitorPlay className="h-4 w-4" />
+                      <MonitorPlay />
                       Sessions
                     </NavLink>
                   </SidebarMenuButton>
@@ -54,7 +53,7 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/knowledge-base">
-                    <BookOpen className="h-4 w-4" />
+                    <BookOpen />
                     Knowledge Base
                   </NavLink>
                 </SidebarMenuButton>
@@ -62,7 +61,7 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <a href="/docs" target="_blank" rel="noopener noreferrer">
-                    <FileText className="h-4 w-4" />
+                    <FileText />
                     API Docs
                   </a>
                 </SidebarMenuButton>
@@ -71,22 +70,23 @@ export default function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4">
+      <SidebarFooter>
         {user && (
-          <p className="mb-2 truncate text-xs text-muted-foreground">{user.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         )}
         {isLoggedIn ? (
           <Button variant="outline" size="sm" className="w-full" onClick={() => auth.logout()}>
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut data-icon="inline-start" />
             Logout
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="w-full" onClick={() => auth.login()}>
-            <LogIn className="mr-2 h-4 w-4" />
+            <LogIn data-icon="inline-start" />
             Login
           </Button>
         )}
       </SidebarFooter>
+      <SidebarRail />
     </ShadcnSidebar>
   )
 }
