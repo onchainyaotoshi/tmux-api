@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,9 +13,9 @@ import {
 
 /* ── Helper Components ─────────────────────────────────────────── */
 
-function SectionCard({ id, title, description, children }) {
+function SectionCard({ title, description, children }) {
   return (
-    <Card id={id} className="mb-12 scroll-mt-5 border-border bg-card">
+    <Card className="border-border bg-card">
       <CardHeader>
         <CardTitle className="text-lg">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -540,66 +540,127 @@ const copyModeSteps = [
 
 /* ── Nav Sections Index ────────────────────────────────────────── */
 
-const sections = [
-  { id: 'session', title: 'Session' },
-  { id: 'window', title: 'Window' },
-  { id: 'pane', title: 'Pane' },
-  { id: 'navigasi', title: 'Navigasi' },
-  { id: 'resize', title: 'Resize' },
-  { id: 'copy-mode', title: 'Copy Mode' },
+const slides = [
+  {
+    title: 'Session',
+    description: 'Session adalah unit utama di tmux. Satu session bisa berisi banyak window. Session tetap berjalan di background meskipun kamu sudah keluar dari terminal.',
+    shortcuts: sessionShortcuts,
+    demoTitle: 'Session Management',
+    demoSteps: sessionSteps,
+  },
+  {
+    title: 'Window',
+    description: 'Window seperti tab di browser. Satu session bisa punya banyak window, dan setiap window menampilkan satu layar terminal penuh.',
+    shortcuts: windowShortcuts,
+    demoTitle: 'Window Management',
+    demoSteps: windowSteps,
+  },
+  {
+    title: 'Pane',
+    description: 'Pane membagi satu window menjadi beberapa area. Kamu bisa split secara vertikal (kiri-kanan) atau horizontal (atas-bawah), sehingga bisa menjalankan beberapa perintah sekaligus dalam satu layar.',
+    shortcuts: paneShortcuts,
+    demoTitle: 'Pane Splitting',
+    demoSteps: paneSteps,
+  },
+  {
+    title: 'Navigasi',
+    description: 'Berpindah antar pane, window, dan session dengan cepat menggunakan shortcut keyboard. Navigasi yang efisien adalah kunci produktivitas di tmux.',
+    shortcuts: navShortcuts,
+    demoTitle: 'Navigasi Pane',
+    demoSteps: navSteps,
+  },
+  {
+    title: 'Resize',
+    description: 'Ubah ukuran pane sesuai kebutuhan. Gunakan Ctrl+arrow untuk resize manual, atau zoom untuk fokus di satu pane secara fullscreen.',
+    shortcuts: resizeShortcuts,
+    demoTitle: 'Resize Pane',
+    demoSteps: resizeSteps,
+  },
+  {
+    title: 'Copy Mode',
+    description: 'Copy mode memungkinkan kamu scroll ke atas, mencari teks, menyeleksi, dan meng-copy output terminal. Sangat berguna untuk menyalin log atau output perintah yang panjang.',
+    shortcuts: copyModeShortcuts,
+    demoTitle: 'Copy Mode',
+    demoSteps: copyModeSteps,
+  },
 ]
 
 /* ── Page Component ────────────────────────────────────────────── */
 
 export default function AboutTmuxPage() {
+  const [current, setCurrent] = useState(0)
+  const slide = slides[current]
+
+  const goNext = useCallback(() => setCurrent(i => Math.min(i + 1, slides.length - 1)), [])
+  const goPrev = useCallback(() => setCurrent(i => Math.max(i - 1, 0)), [])
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key === 'ArrowRight') goNext()
+      if (e.key === 'ArrowLeft') goPrev()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [goNext, goPrev])
+
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">About Tmux</h1>
-        <p className="mt-1 text-muted-foreground">
-          Visual tutorial untuk orchestrasi terminal
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">About Tmux</h1>
+          <p className="mt-1 text-muted-foreground">
+            Visual tutorial untuk orchestrasi terminal
+          </p>
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {current + 1} / {slides.length}
+        </span>
       </div>
 
-      <nav className="mb-8 flex flex-wrap gap-2">
-        {sections.map(({ id, title }) => (
-          <a key={id} href={`#${id}`}>
-            <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-              {title}
+      {/* Slide selector */}
+      <nav className="mb-6 flex flex-wrap gap-2">
+        {slides.map((s, i) => (
+          <button key={s.title} onClick={() => setCurrent(i)}>
+            <Badge
+              variant={i === current ? 'default' : 'outline'}
+              className="cursor-pointer hover:bg-accent"
+            >
+              {s.title}
             </Badge>
-          </a>
+          </button>
         ))}
       </nav>
 
-      <SectionCard id="session" title="Session" description="Session adalah unit utama di tmux. Satu session bisa berisi banyak window. Session tetap berjalan di background meskipun kamu sudah keluar dari terminal.">
-        <ShortcutTable shortcuts={sessionShortcuts} />
-        <TerminalDemo title="Session Management" steps={sessionSteps} />
+      {/* Active slide */}
+      <SectionCard
+        key={current}
+        title={slide.title}
+        description={slide.description}
+      >
+        <ShortcutTable shortcuts={slide.shortcuts} />
+        <TerminalDemo title={slide.demoTitle} steps={slide.demoSteps} />
       </SectionCard>
 
-      <SectionCard id="window" title="Window" description="Window seperti tab di browser. Satu session bisa punya banyak window, dan setiap window menampilkan satu layar terminal penuh.">
-        <ShortcutTable shortcuts={windowShortcuts} />
-        <TerminalDemo title="Window Management" steps={windowSteps} />
-      </SectionCard>
-
-      <SectionCard id="pane" title="Pane" description="Pane membagi satu window menjadi beberapa area. Kamu bisa split secara vertikal (kiri-kanan) atau horizontal (atas-bawah), sehingga bisa menjalankan beberapa perintah sekaligus dalam satu layar.">
-        <ShortcutTable shortcuts={paneShortcuts} />
-        <TerminalDemo title="Pane Splitting" steps={paneSteps} />
-      </SectionCard>
-
-      <SectionCard id="navigasi" title="Navigasi" description="Berpindah antar pane, window, dan session dengan cepat menggunakan shortcut keyboard. Navigasi yang efisien adalah kunci produktivitas di tmux.">
-        <ShortcutTable shortcuts={navShortcuts} />
-        <TerminalDemo title="Navigasi Pane" steps={navSteps} />
-      </SectionCard>
-
-      <SectionCard id="resize" title="Resize" description="Ubah ukuran pane sesuai kebutuhan. Gunakan Ctrl+arrow untuk resize manual, atau zoom untuk fokus di satu pane secara fullscreen.">
-        <ShortcutTable shortcuts={resizeShortcuts} />
-        <TerminalDemo title="Resize Pane" steps={resizeSteps} />
-      </SectionCard>
-
-      <SectionCard id="copy-mode" title="Copy Mode" description="Copy mode memungkinkan kamu scroll ke atas, mencari teks, menyeleksi, dan meng-copy output terminal. Sangat berguna untuk menyalin log atau output perintah yang panjang.">
-        <ShortcutTable shortcuts={copyModeShortcuts} />
-        <TerminalDemo title="Copy Mode" steps={copyModeSteps} />
-      </SectionCard>
+      {/* Prev / Next */}
+      <div className="mt-6 flex items-center justify-between">
+        <Button
+          variant="outline"
+          onClick={goPrev}
+          disabled={current === 0}
+        >
+          ← Prev
+        </Button>
+        <span className="text-xs text-muted-foreground hidden sm:inline">
+          Gunakan ← → untuk navigasi
+        </span>
+        <Button
+          variant="outline"
+          onClick={goNext}
+          disabled={current === slides.length - 1}
+        >
+          Next →
+        </Button>
+      </div>
     </div>
   )
 }
