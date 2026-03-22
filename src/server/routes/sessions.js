@@ -1,6 +1,6 @@
 const namePattern = '^[a-zA-Z0-9_-]+$'
 
-const workerSchema = {
+const sessionSchema = {
   type: 'object',
   properties: {
     id: { type: 'string' },
@@ -15,14 +15,14 @@ const workerSchema = {
   },
 }
 
-export async function workerRoutes(fastify) {
-  const { workerService } = fastify
+export async function sessionRoutes(fastify) {
+  const { sessionService } = fastify
 
-  // POST /api/workers — spawn worker
-  fastify.post('/workers', {
+  // POST /api/sessions — spawn session
+  fastify.post('/sessions', {
     schema: {
-      tags: ['Workers'],
-      summary: 'Spawn a new worker',
+      tags: ['L2 — Session'],
+      summary: 'Spawn a new session',
       body: {
         type: 'object',
         required: ['name', 'command'],
@@ -37,23 +37,23 @@ export async function workerRoutes(fastify) {
           type: 'object',
           properties: {
             success: { type: 'boolean' },
-            data: workerSchema,
+            data: sessionSchema,
           },
         },
       },
     },
   }, async (request, reply) => {
     const { name, command, cwd } = request.body
-    const data = await workerService.spawn(name, command, cwd)
+    const data = await sessionService.spawn(name, command, cwd)
     reply.code(201)
     return { success: true, data }
   })
 
-  // GET /api/workers — list workers
-  fastify.get('/workers', {
+  // GET /api/sessions — list sessions
+  fastify.get('/sessions', {
     schema: {
-      tags: ['Workers'],
-      summary: 'List all workers',
+      tags: ['L2 — Session'],
+      summary: 'List all sessions',
       querystring: {
         type: 'object',
         properties: {
@@ -65,21 +65,21 @@ export async function workerRoutes(fastify) {
           type: 'object',
           properties: {
             success: { type: 'boolean' },
-            data: { type: 'array', items: workerSchema },
+            data: { type: 'array', items: sessionSchema },
           },
         },
       },
     },
   }, async (request) => {
-    const data = workerService.list(request.query.status)
+    const data = sessionService.list(request.query.status)
     return { success: true, data }
   })
 
-  // GET /api/workers/:id — worker detail
-  fastify.get('/workers/:id', {
+  // GET /api/sessions/:id — session detail
+  fastify.get('/sessions/:id', {
     schema: {
-      tags: ['Workers'],
-      summary: 'Get worker detail with output',
+      tags: ['L2 — Session'],
+      summary: 'Get session detail with output',
       params: {
         type: 'object',
         properties: { id: { type: 'string' } },
@@ -92,7 +92,7 @@ export async function workerRoutes(fastify) {
             data: {
               type: 'object',
               properties: {
-                ...workerSchema.properties,
+                ...sessionSchema.properties,
                 output: { type: 'string' },
                 last_event: {
                   type: ['object', 'null'],
@@ -111,7 +111,7 @@ export async function workerRoutes(fastify) {
     },
   }, async (request, reply) => {
     try {
-      const data = await workerService.get(request.params.id)
+      const data = await sessionService.get(request.params.id)
       return { success: true, data }
     } catch (err) {
       reply.code(404)
@@ -119,11 +119,11 @@ export async function workerRoutes(fastify) {
     }
   })
 
-  // POST /api/workers/:id/task — send task
-  fastify.post('/workers/:id/task', {
+  // POST /api/sessions/:id/task — send task
+  fastify.post('/sessions/:id/task', {
     schema: {
-      tags: ['Workers'],
-      summary: 'Send task to worker',
+      tags: ['L2 — Session'],
+      summary: 'Send task to session',
       params: {
         type: 'object',
         properties: { id: { type: 'string' } },
@@ -138,7 +138,7 @@ export async function workerRoutes(fastify) {
     },
   }, async (request, reply) => {
     try {
-      const data = await workerService.sendTask(request.params.id, request.body.input)
+      const data = await sessionService.sendTask(request.params.id, request.body.input)
       return { success: true, data }
     } catch (err) {
       if (err.message.includes('not found')) {
@@ -150,11 +150,11 @@ export async function workerRoutes(fastify) {
     }
   })
 
-  // DELETE /api/workers/:id — kill worker
-  fastify.delete('/workers/:id', {
+  // DELETE /api/sessions/:id — kill session
+  fastify.delete('/sessions/:id', {
     schema: {
-      tags: ['Workers'],
-      summary: 'Kill a worker',
+      tags: ['L2 — Session'],
+      summary: 'Kill a session',
       params: {
         type: 'object',
         properties: { id: { type: 'string' } },
@@ -162,7 +162,7 @@ export async function workerRoutes(fastify) {
     },
   }, async (request, reply) => {
     try {
-      const data = await workerService.kill(request.params.id)
+      const data = await sessionService.kill(request.params.id)
       return { success: true, data }
     } catch (err) {
       if (err.message.includes('not found')) {
@@ -174,11 +174,11 @@ export async function workerRoutes(fastify) {
     }
   })
 
-  // GET /api/workers/:id/health — single worker health
-  fastify.get('/workers/:id/health', {
+  // GET /api/sessions/:id/health — single session health
+  fastify.get('/sessions/:id/health', {
     schema: {
-      tags: ['Workers'],
-      summary: 'Health check single worker',
+      tags: ['L2 — Session'],
+      summary: 'Health check single session',
       params: {
         type: 'object',
         properties: { id: { type: 'string' } },
@@ -186,7 +186,7 @@ export async function workerRoutes(fastify) {
     },
   }, async (request, reply) => {
     try {
-      const data = await workerService.checkHealth(request.params.id)
+      const data = await sessionService.checkHealth(request.params.id)
       return { success: true, data }
     } catch (err) {
       reply.code(404)

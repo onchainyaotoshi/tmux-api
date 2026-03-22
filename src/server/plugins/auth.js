@@ -7,8 +7,8 @@ async function auth(fastify, opts) {
   fastify.addHook('onRequest', async (request, reply) => {
     if (!request.url.startsWith('/api/')) return
 
-    // Events endpoint uses per-worker token auth, not API key
-    if (request.method === 'POST' && /^\/api\/workers\/[^/]+\/events(\?|$)/.test(request.url)) return
+    // Events endpoint uses per-session token auth, not API key
+    if (request.method === 'POST' && /^\/api\/sessions\/[^/]+\/events(\?|$)/.test(request.url)) return
 
     // Try API key first
     const providedKey = request.headers['x-api-key']

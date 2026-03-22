@@ -15,7 +15,7 @@ import { paneRoutes } from './routes/panes.js'
 import { authProxyRoutes } from './routes/authProxy.js'
 import { DatabaseService } from './services/database.js'
 import { SessionService } from './services/session.js'
-import { workerRoutes } from './routes/workers.js'
+import { sessionRoutes } from './routes/sessions.js'
 import { healthRoutes } from './routes/health.js'
 import { eventRoutes } from './routes/events.js'
 
@@ -73,7 +73,7 @@ await app.register(rateLimit, {
 await app.register(terminalRoutes, { prefix: '/api' })
 await app.register(windowRoutes, { prefix: '/api' })
 await app.register(paneRoutes, { prefix: '/api' })
-await app.register(workerRoutes, { prefix: '/api' })
+await app.register(sessionRoutes, { prefix: '/api' })
 await app.register(healthRoutes, { prefix: '/api' })
 await app.register(eventRoutes, { prefix: '/api' })
 
