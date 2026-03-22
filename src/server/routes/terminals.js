@@ -3,7 +3,7 @@ export async function terminalRoutes(fastify) {
 
   fastify.get('/terminals', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Terminals'],
       summary: 'List all terminals',
       response: {
         200: {
@@ -32,7 +32,7 @@ export async function terminalRoutes(fastify) {
 
   fastify.post('/terminals', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Terminals'],
       summary: 'Create a new terminal',
       body: {
         type: 'object',
@@ -62,7 +62,7 @@ export async function terminalRoutes(fastify) {
 
   fastify.put('/terminals/:terminal', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Terminals'],
       summary: 'Rename a terminal',
       params: {
         type: 'object',
@@ -83,7 +83,7 @@ export async function terminalRoutes(fastify) {
 
   fastify.delete('/terminals/:terminal', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Terminals'],
       summary: 'Kill a terminal',
       params: {
         type: 'object',

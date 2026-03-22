@@ -16,7 +16,7 @@ export async function windowRoutes(fastify) {
 
   fastify.get('/terminals/:terminal/windows', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Windows'],
       summary: 'List windows in a terminal',
       params: terminalParam,
     },
@@ -27,7 +27,7 @@ export async function windowRoutes(fastify) {
 
   fastify.post('/terminals/:terminal/windows', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Windows'],
       summary: 'Create a new window',
       params: terminalParam,
       body: {
@@ -45,7 +45,7 @@ export async function windowRoutes(fastify) {
 
   fastify.put('/terminals/:terminal/windows/:index', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Windows'],
       summary: 'Rename a window',
       params: terminalWindowParams,
       body: {
@@ -64,7 +64,7 @@ export async function windowRoutes(fastify) {
 
   fastify.delete('/terminals/:terminal/windows/:index', {
     schema: {
-      tags: ['L1 — Terminal (Low-level)'],
+      tags: ['Windows'],
       summary: 'Kill a window',
       params: terminalWindowParams,
     },
