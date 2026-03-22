@@ -20,6 +20,7 @@ const PORT = parseInt(process.env.PORT || '9993', 10)
 const API_KEY = process.env.API_KEY
 const AUTH_ACCOUNTS_URL = process.env.AUTH_ACCOUNTS_URL
 const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED !== 'false'
+const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '100', 10)
 
 if (!API_KEY) {
   console.error('ERROR: API_KEY must be set in .env')
@@ -45,13 +46,15 @@ app.setErrorHandler((error, request, reply) => {
 // Plugins
 await app.register(swaggerSetup, { enabled: SWAGGER_ENABLED })
 await app.register(authPlugin, { apiKey: API_KEY, authAccountsUrl: AUTH_ACCOUNTS_URL })
-await app.register(rateLimit, {
-  max: 100,
-  timeWindow: '1 minute',
-  keyGenerator: (request) => request.headers['x-api-key'] || request.headers['authorization'] || request.ip,
-  hook: 'onRequest',
-  allowList: [],
-})
+if (RATE_LIMIT_MAX > 0) {
+  await app.register(rateLimit, {
+    max: RATE_LIMIT_MAX,
+    timeWindow: '1 minute',
+    keyGenerator: (request) => request.headers['x-api-key'] || request.headers['authorization'] || request.ip,
+    hook: 'onRequest',
+    allowList: [],
+  })
+}
 
 // API routes
 await app.register(terminalRoutes, { prefix: '/api' })
