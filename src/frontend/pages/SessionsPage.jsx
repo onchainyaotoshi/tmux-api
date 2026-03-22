@@ -1,7 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { apiFetch } from '../lib/api.js'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import ConfirmModal from '../components/ConfirmModal.jsx'
-import styles from './SessionsPage.module.css'
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState([])
@@ -43,43 +53,52 @@ export default function SessionsPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h2>Sessions</h2>
-        <button className={styles.refreshBtn} onClick={fetchSessions} disabled={loading}>
+    <div className="max-w-3xl">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-mono text-2xl font-bold">Sessions</h2>
+        <Button variant="outline" size="sm" onClick={fetchSessions} disabled={loading}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           {loading ? 'Loading...' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {sessions.length === 0 && !loading ? (
-        <div className={styles.empty}>No active sessions</div>
+        <p className="py-10 text-center text-muted-foreground">No active sessions</p>
       ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Windows</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Windows</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {sessions.map((s) => (
-              <tr key={s.name}>
-                <td className={styles.sessionName}>{s.name}</td>
-                <td>{s.windows}</td>
-                <td>{formatDate(s.created)}</td>
-                <td>
-                  <button className={styles.killBtn} onClick={() => setKillTarget(s.name)}>
+              <TableRow key={s.name}>
+                <TableCell className="font-mono">{s.name}</TableCell>
+                <TableCell>{s.windows}</TableCell>
+                <TableCell>{formatDate(s.created)}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setKillTarget(s.name)}
+                  >
                     Kill
-                  </button>
-                </td>
-              </tr>
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
 
       {killTarget && (

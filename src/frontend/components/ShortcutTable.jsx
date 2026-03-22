@@ -1,22 +1,31 @@
-import styles from './ShortcutTable.module.css';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 export default function ShortcutTable({ shortcuts }) {
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          <th>Shortcut</th>
-          <th>Keterangan</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table className="my-5">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Shortcut</TableHead>
+          <TableHead>Keterangan</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {shortcuts.map(({ key, description }, i) => (
-          <tr key={i}>
-            <td><code className={styles.key}>{key}</code></td>
-            <td className={styles.desc}>{description}</td>
-          </tr>
+          <TableRow key={i}>
+            <TableCell>
+              <code className="rounded bg-muted px-2 py-1 font-mono text-sm whitespace-nowrap">{key}</code>
+            </TableCell>
+            <TableCell className="text-muted-foreground">{description}</TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
-  );
+      </TableBody>
+    </Table>
+  )
 }

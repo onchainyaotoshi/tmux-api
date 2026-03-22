@@ -14,5 +14,9 @@ export default function CallbackPage() {
       })
   }, [navigate])
 
-  return <div style={{ color: 'var(--text-secondary)', padding: '40px', textAlign: 'center' }}>Logging in...</div>
+  return (
+    <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+      Logging in...
+    </div>
+  )
 }
