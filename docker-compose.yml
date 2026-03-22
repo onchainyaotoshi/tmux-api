@@ -1,6 +1,9 @@
 services:
-  tmux-tutorial:
+  tmux-management:
     build: .
     ports:
-      - "9997:80"
+      - "127.0.0.1:${PORT:-9997}:${PORT:-9997}"
+    env_file: .env
+    volumes:
+      - /tmp:/tmp
     restart: unless-stopped
