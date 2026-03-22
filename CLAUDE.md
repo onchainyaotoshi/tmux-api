@@ -106,6 +106,7 @@ npm run test:watch    # Watch mode
 API_KEY=<required>                  # API key for external client auth
 PORT=9993                           # Server port (default: 9993)
 SWAGGER_ENABLED=true                # Set to "false" to disable Scalar API docs
+FRONTEND_ENABLED=true               # Set to "false" to disable serving frontend SPA
 AUTH_ACCOUNTS_URL=<accounts URL>    # Accounts service URL for Bearer token validation
 ```
 
@@ -121,7 +122,7 @@ See `.env.example` for full documentation.
 
 **Conventional commits required:** `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`
 
-Current version: **v1.1.0**
+Current version: **v1.2.0**
 
 ## Testing
 

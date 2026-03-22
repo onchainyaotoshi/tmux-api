@@ -62,9 +62,10 @@ await app.register(windowRoutes, { prefix: '/api' })
 await app.register(paneRoutes, { prefix: '/api' })
 await app.register(sessionRoutes, { prefix: '/api' })
 
-// Serve static frontend (only if dist/ exists)
+// Serve static frontend (only if dist/ exists and not disabled)
+const frontendEnabled = process.env.FRONTEND_ENABLED !== 'false'
 const distPath = join(__dirname, '../../dist')
-if (existsSync(distPath)) {
+if (frontendEnabled && existsSync(distPath)) {
   await app.register(fastifyStatic, {
     root: distPath,
     wildcard: false,
