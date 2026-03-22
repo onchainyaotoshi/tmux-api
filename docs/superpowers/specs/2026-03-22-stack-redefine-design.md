@@ -63,19 +63,26 @@ No new functionality is added — this is a rename + documentation effort that e
 
 Routes are public but tagged as low-level in Swagger. Docs recommend using L2 for most cases.
 
+Note: `sessions.js` currently uses `:name` as the param, while `windows.js` and `panes.js` use `:session`. All will be unified to `:terminal`. Route handlers referencing `request.params.session` or `request.params.name` must update to `request.params.terminal`.
+
 | Current | New |
 |---|---|
 | `GET /api/sessions` | `GET /api/terminals` |
 | `POST /api/sessions` | `POST /api/terminals` |
-| `GET /api/sessions/:session` | `GET /api/terminals/:name` |
-| `DELETE /api/sessions/:session` | `DELETE /api/terminals/:name` |
-| `GET /api/sessions/:session/windows` | `GET /api/terminals/:name/windows` |
-| `POST /api/sessions/:session/windows` | `POST /api/terminals/:name/windows` |
-| `DELETE /api/sessions/:session/windows/:window` | `DELETE /api/terminals/:name/windows/:window` |
-| `GET /api/sessions/:session/windows/:window/panes` | `GET /api/terminals/:name/windows/:window/panes` |
-| `POST /api/sessions/:session/windows/:window/panes` | `POST /api/terminals/:name/windows/:window/panes` |
-| `POST .../panes/:index/send-keys` | `POST /api/terminals/:name/windows/:window/panes/:index/send-keys` |
-| `GET .../panes/:index/capture` | `GET /api/terminals/:name/windows/:window/panes/:index/capture` |
+| `PUT /api/sessions/:name` | `PUT /api/terminals/:terminal` |
+| `DELETE /api/sessions/:name` | `DELETE /api/terminals/:terminal` |
+| `GET /api/sessions/:session/windows` | `GET /api/terminals/:terminal/windows` |
+| `POST /api/sessions/:session/windows` | `POST /api/terminals/:terminal/windows` |
+| `PUT /api/sessions/:session/windows/:index` | `PUT /api/terminals/:terminal/windows/:index` |
+| `DELETE /api/sessions/:session/windows/:index` | `DELETE /api/terminals/:terminal/windows/:index` |
+| `GET /api/sessions/:session/windows/:window/panes` | `GET /api/terminals/:terminal/windows/:window/panes` |
+| `POST /api/sessions/:session/windows/:window/panes` | `POST /api/terminals/:terminal/windows/:window/panes` |
+| `PUT .../panes/:index/resize` | `PUT /api/terminals/:terminal/windows/:window/panes/:index/resize` |
+| `DELETE .../panes/:index` | `DELETE /api/terminals/:terminal/windows/:window/panes/:index` |
+| `POST .../panes/:index/send-keys` | `POST /api/terminals/:terminal/windows/:window/panes/:index/send-keys` |
+| `GET .../panes/:index/capture` | `GET /api/terminals/:terminal/windows/:window/panes/:index/capture` |
+
+Note: No single-session GET route exists in L1 currently. There is no `GET /api/sessions/:name`. If needed in the future, it would be `GET /api/terminals/:terminal`.
 
 ### L2 — Session
 
@@ -84,8 +91,12 @@ Routes are public but tagged as low-level in Swagger. Docs recommend using L2 fo
 | `GET /api/workers` | `GET /api/sessions` |
 | `POST /api/workers` | `POST /api/sessions` |
 | `GET /api/workers/:id` | `GET /api/sessions/:id` |
+| `POST /api/workers/:id/task` | `POST /api/sessions/:id/task` |
 | `DELETE /api/workers/:id` | `DELETE /api/sessions/:id` |
+| `GET /api/workers/:id/events` | `GET /api/sessions/:id/events` |
 | `POST /api/workers/:id/events` | `POST /api/sessions/:id/events` |
+| `GET /api/health/workers` | `GET /api/health/sessions` |
+| `GET /api/workers/:id/health` | `GET /api/sessions/:id/health` |
 
 ### L3 — Agent [PLANNED]
 
@@ -111,6 +122,9 @@ TBD.
 | `src/server/routes/windows.js` | `src/server/routes/windows.js` (stays, nested under terminals) |
 | `src/server/routes/panes.js` | `src/server/routes/panes.js` (stays, nested under terminals) |
 | `src/server/routes/workers.js` | `src/server/routes/sessions.js` |
+| `src/server/routes/events.js` | `src/server/routes/events.js` (stays, update internal references + route prefix) |
+| `src/server/routes/health.js` | `src/server/routes/health.js` (stays, update internal references + route prefix) |
+| `src/server/plugins/auth.js` | stays (update hardcoded `/api/workers/` regex to `/api/sessions/`) |
 
 ### Classes
 
@@ -124,7 +138,8 @@ TBD.
 | Current | New |
 |---|---|
 | `fastify.tmux` | `fastify.terminal` |
-| `fastify.worker` | `fastify.session` |
+| `fastify.workerService` | `fastify.sessionService` |
+| `fastify.db` | `fastify.db` (stays) |
 
 ### Tests
 
@@ -135,6 +150,11 @@ TBD.
 | `tests/routes/windows.test.js` | stays (update internal references) |
 | `tests/routes/panes.test.js` | stays (update internal references) |
 | `tests/routes/workers.test.js` | `tests/routes/sessions.test.js` |
+| `tests/routes/events.test.js` | stays (update internal references) |
+| `tests/routes/health.test.js` | stays (update internal references) |
+| `tests/services/worker.test.js` | `tests/services/session.test.js` |
+| `tests/services/database.test.js` | stays (update table/column references) |
+| `tests/plugins/auth.test.js` | stays (update route pattern references) |
 
 ### Database
 
@@ -144,14 +164,82 @@ TBD.
 | `worker_events` table | `session_events` table |
 | `worker_id` column | `session_id` column |
 
+### Internal Naming
+
+| Current | New |
+|---|---|
+| tmux session prefix `worker-{name}` | `session-{name}` |
+| `event_token` column | stays (not worker-specific terminology — applies equally to sessions) |
+| `ALLOWED_SUBCOMMANDS` constant | stays (tmux-specific, not affected by rename) |
+
+### DatabaseService Methods
+
+| Current | New |
+|---|---|
+| `createWorker(name, command, cwd)` | `createSession(name, command, cwd)` |
+| `getWorker(id)` | `getSession(id)` |
+| `listWorkers(status)` | `listSessions(status)` |
+| `updateStatus(id, status)` | stays |
+| `updateTask(id, task)` | stays |
+| `createEvent(workerId, type, data)` | `createEvent(sessionId, type, data)` |
+| `getLastEvent(workerId)` | `getLastEvent(sessionId)` |
+| `listEvents(workerId, limit)` | `listEvents(sessionId, limit)` |
+
+### SessionService (was WorkerService) Methods
+
+Method names stay as-is (`spawn`, `processEvent`, `sendTask`, `getOutput`, `kill`, `checkHealth`, `checkAllHealth`, `list`, `get`). However, all user-facing error messages must update from "Worker" to "Session":
+
+| Current | New |
+|---|---|
+| `"Worker not found: ${id}"` | `"Session not found: ${id}"` |
+| `"Cannot send task to ${worker.status} worker"` | `"Cannot send task to ${session.status} session"` |
+| Other `worker` references in error strings | Replace with `session` |
+
+Internal variable names (e.g., `const worker = this.db.getWorker(id)`) should also be renamed to `session` for consistency.
+
+### Auth Plugin
+
+`src/server/plugins/auth.js` has a hardcoded regex exempting event POST routes from API key auth:
+
+| Current | New |
+|---|---|
+| `/^\/api\/workers\/[^/]+\/events(\?\|$)/` | `/^\/api\/sessions\/[^/]+\/events(\?\|$)/` |
+
+This is critical — if missed, event ingestion from Claude Code hooks will break silently (events will require API key auth instead of token auth).
+
+### Frontend
+
+| File | Change |
+|---|---|
+| `src/frontend/pages/SessionsPage.jsx` | Update API URL from `/sessions` to `/terminals` |
+| Other frontend files referencing `/api/sessions` | Update to `/api/terminals` |
+
+### Database Migration
+
+Use SQLite `ALTER TABLE ... RENAME TO` (supported since SQLite 3.25.0):
+
+```sql
+ALTER TABLE workers RENAME TO sessions;
+ALTER TABLE worker_events RENAME TO session_events;
+ALTER TABLE session_events RENAME COLUMN worker_id TO session_id;
+```
+
+No data loss. Existing records preserved. Applied in `DatabaseService.#migrate()`.
+
 ## Swagger Reorganization
 
-Tags grouped by layer with descriptions:
+Current tags (`Sessions`, `Windows`, `Panes`, `Workers`, `Events`, `Health`) collapse into layer-based tags. Each route file's schema `tags` array must use the exact tag string.
 
-- **`L1 — Terminal (Low-level)`**: Direct tmux session, window, and pane management. Use L2 Session endpoints for most use cases.
+| Current Tags | New Tag | Routes |
+|---|---|---|
+| `Sessions`, `Windows`, `Panes` | `L1 — Terminal (Low-level)` | All terminal, window, pane routes |
+| `Workers`, `Events`, `Health` | `L2 — Session` | All session, event, health routes |
+
+Tag descriptions (in swagger plugin config):
+- **`L1 — Terminal (Low-level)`**: Direct tmux terminal, window, and pane management. Use L2 Session endpoints for most use cases.
 - **`L2 — Session`**: Managed session instances with state tracking, events, and lifecycle management.
-- **`L3 — Agent`** (planned): Agent definitions — reusable blueprints for spawning sessions.
-- **`L4 — Orchestrator`** (planned): Fleet management, auto-recovery, and task routing.
+- **`L3 — Agent`** (future): Agent definitions — reusable blueprints for spawning sessions.
+- **`L4 — Orchestrator`** (future): Fleet management, auto-recovery, and task routing.
 
 ## Architecture Documentation
 
