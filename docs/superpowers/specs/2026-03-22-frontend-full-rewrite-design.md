@@ -43,11 +43,19 @@ The current frontend has compounding layout issues centered on the sidebar:
 | `--sidebar-border` | `#27272a` | zinc-800 |
 | `--sidebar-primary` | `#3b82f6` | blue-500 |
 | `--sidebar-accent` | `#1e293b` | slate-800 |
+| `--sidebar-primary-foreground` | `#ffffff` | white |
+| `--sidebar-accent-foreground` | `#f8fafc` | slate-50 |
+| `--sidebar-ring` | `#3b82f6` | blue-500 |
+| `--popover` | `#18181b` | zinc-900, same as card |
+| `--popover-foreground` | `#fafafa` | zinc-50 |
+| `--sidebar` | `#09090b` | alias for sidebar-background |
+| `--radius` | `0.625rem` | keep existing border radius |
 
 ## Typography
 
-- **Body:** `Inter`, system-ui, sans-serif — default for all UI text
+- **Body:** `Inter`, system-ui, sans-serif — default for all UI text. Load via Google Fonts CDN in `index.html`.
 - **Code/data:** `JetBrains Mono`, monospace — session names, terminal output, API references only
+- **Theme variables:** `--font-sans: 'Inter', system-ui, sans-serif` and `--font-mono: 'JetBrains Mono', monospace`
 
 ## Layout Architecture
 
@@ -84,7 +92,7 @@ Fixed 240px, no collapse feature, no tooltips.
 
 ### HomePage (`/`)
 - Unauthenticated landing page
-- Clean: icon/logo, heading ("Orchestrate your AI workforce"), subtitle, "Get Started" button
+- Clean: icon/logo, heading ("Orchestrate your AI workforce"), subtitle, "Get Started" button (triggers `auth.login()` OAuth flow)
 - 3 feature cards: Sessions, Capture, API — shadcn Card, icon + title + one-liner
 - No ASCII art, no Matrix rain, no typing animation
 - Authenticated users redirect to `/sessions`
@@ -94,17 +102,18 @@ Fixed 240px, no collapse feature, no tooltips.
 - shadcn Table: Name, Windows, Created, Actions columns
 - Actions: View (outline button), Kill (destructive ghost button)
 - Empty state: "No active sessions"
-- TerminalViewer modal: same logic, clean styling (monospace text on dark surface, not green-on-black)
-- ConfirmDialog: same logic, clean styling
+- TerminalViewer modal (renamed from TerminalViewerModal): same logic, clean styling (monospace text on dark surface, not green-on-black)
+- ConfirmDialog (renamed from ConfirmModal): same logic, clean styling
 
-### AgentsPage (`/agents`, new)
-- Placeholder page
+### AgentsPage (`/agents`, new, protected)
+- Placeholder page, requires auth
 - Title "Agents" + "Coming soon" message
 
 ### About Tmux (`/about-tmux`)
 - Renamed from KnowledgeBasePage
 - Route changed from `/knowledge-base` to `/about-tmux`
 - Same tutorial content (Indonesian), restyled with clean design
+- The 6 section components (`SessionSection`, `WindowSection`, etc.) are deleted; their content is inlined into `AboutTmuxPage.jsx` as self-contained sections within a single file
 - Section nav badges with clean styling (no green glow)
 
 ### CallbackPage (`/callback`)
@@ -143,8 +152,10 @@ src/frontend/
     api.js                         — keep
     utils.js                       — keep
 
-  src/index.css                    — rewrite: new theme
+src/index.css                        — rewrite: new theme (note: at src/ root, not inside src/frontend/)
 ```
+
+Note: The `@theme inline { ... }` block in `src/index.css` maps CSS variables to Tailwind v4 utility classes. This block must be updated to reflect the new palette but its structure is preserved.
 
 ## Files to Delete
 
