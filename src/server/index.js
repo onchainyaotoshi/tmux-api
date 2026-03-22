@@ -3,7 +3,7 @@ import fastifyStatic from '@fastify/static'
 import rateLimit from '@fastify/rate-limit'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import 'dotenv/config'
 
 import { TmuxService } from './services/tmux.js'
@@ -13,6 +13,10 @@ import { sessionRoutes } from './routes/sessions.js'
 import { windowRoutes } from './routes/windows.js'
 import { paneRoutes } from './routes/panes.js'
 import { authProxyRoutes } from './routes/authProxy.js'
+import { DatabaseService } from './services/database.js'
+import { WorkerService } from './services/worker.js'
+import { workerRoutes } from './routes/workers.js'
+import { healthRoutes } from './routes/health.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT || '9993', 10)
@@ -29,6 +33,17 @@ const app = Fastify({ logger: true })
 
 // Decorate with TmuxService
 app.decorate('tmux', new TmuxService())
+
+// Database + WorkerService
+const dataDir = join(__dirname, '../../data')
+mkdirSync(dataDir, { recursive: true })
+const db = new DatabaseService(join(dataDir, 'foreman.db'))
+db.init()
+app.decorate('db', db)
+app.decorate('workerService', new WorkerService(app.tmux, db))
+
+// Graceful shutdown
+app.addHook('onClose', () => db.close())
 
 // Global error handler for tmux errors
 app.setErrorHandler((error, request, reply) => {
@@ -57,6 +72,8 @@ await app.register(rateLimit, {
 await app.register(sessionRoutes, { prefix: '/api' })
 await app.register(windowRoutes, { prefix: '/api' })
 await app.register(paneRoutes, { prefix: '/api' })
+await app.register(workerRoutes, { prefix: '/api' })
+await app.register(healthRoutes, { prefix: '/api' })
 
 // Serve static frontend (only if dist/ exists)
 const distPath = join(__dirname, '../../dist')
