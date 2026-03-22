@@ -203,36 +203,6 @@ npm test              # Run tests
 npm run test:watch    # Watch mode
 ```
 
-## Git Flow
-
-```mermaid
-graph LR
-    subgraph Branches
-        main["main<br/>(production)"]
-        develop["develop<br/>(integration)"]
-        feature["feature/*<br/>(new features)"]
-        release["release/*<br/>(release prep)"]
-        hotfix["hotfix/*<br/>(urgent fixes)"]
-    end
-
-    feature -->|merge| develop
-    develop -->|create| release
-    release -->|merge + tag| main
-    release -->|merge back| develop
-    hotfix -->|merge + tag| main
-    hotfix -->|merge back| develop
-    develop -->|branch| feature
-    main -->|branch| hotfix
-```
-
-- **main** — production releases only
-- **develop** — integration branch
-- **feature/*** — new features (from develop)
-- **release/*** — release prep (develop → main)
-- **hotfix/*** — urgent fixes (from main)
-
-Commits must follow conventional format: `feat:`, `fix:`, `docs:`, `chore:`, etc.
-
 ## License
 
 MIT
