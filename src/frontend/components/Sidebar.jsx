@@ -1,28 +1,13 @@
-import { useState, useEffect } from 'react';
-import styles from './Sidebar.module.css';
+import { useState } from 'react'
+import { NavLink } from 'react-router-dom'
+import { auth } from '../lib/auth.js'
+import styles from './Sidebar.module.css'
 
-export default function Sidebar({ sections }) {
-  const [activeId, setActiveId] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
+export default function Sidebar() {
+  const [isOpen, setIsOpen] = useState(false)
+  const user = auth.getUser()
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.find((e) => e.isIntersecting);
-        if (visible) setActiveId(visible.target.id);
-      },
-      { rootMargin: '-20% 0px -60% 0px' }
-    );
-
-    sections.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [sections]);
-
-  const handleClick = () => setIsOpen(false);
+  const handleClick = () => setIsOpen(false)
 
   return (
     <>
@@ -37,23 +22,37 @@ export default function Sidebar({ sections }) {
         <div className={styles.overlay} onClick={() => setIsOpen(false)} />
       )}
       <nav className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
-        <div className={styles.logo}>$ tmux</div>
-        <div className={styles.groupLabel}>Tutorial</div>
+        <div className={styles.logo}>$ foreman</div>
+
+        <div className={styles.groupLabel}>Dashboard</div>
         <ul className={styles.nav}>
-          {sections.map(({ id, title }) => (
-            <li key={id}>
-              <a
-                href={`#${id}`}
-                className={`${styles.navItem} ${activeId === id ? styles.navItemActive : ''}`}
-                onClick={handleClick}
-              >
-                {title}
-              </a>
-            </li>
-          ))}
+          <li>
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+              }
+              onClick={handleClick}
+            >
+              Sessions
+            </NavLink>
+          </li>
         </ul>
+
         <div className={styles.groupLabel}>Resources</div>
         <ul className={styles.nav}>
+          <li>
+            <NavLink
+              to="/knowledge-base"
+              className={({ isActive }) =>
+                `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+              }
+              onClick={handleClick}
+            >
+              Knowledge Base
+            </NavLink>
+          </li>
           <li>
             <a
               href="/docs"
@@ -61,11 +60,20 @@ export default function Sidebar({ sections }) {
               rel="noopener noreferrer"
               className={styles.navItem}
             >
-              API Docs
+              API Docs ↗
             </a>
           </li>
         </ul>
+
+        <div className={styles.bottom}>
+          {user && (
+            <div className={styles.userInfo}>{user.email}</div>
+          )}
+          <button className={styles.logoutBtn} onClick={() => auth.logout()}>
+            Logout
+          </button>
+        </div>
       </nav>
     </>
-  );
+  )
 }
