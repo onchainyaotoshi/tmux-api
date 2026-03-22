@@ -1,16 +1,18 @@
-# CLAUDE.md — Foreman Development Guide
+# CLAUDE.md — tmux-api Development Guide
 
-## What is Foreman?
+## What is tmux-api?
 
-Foreman is a REST API server for controlling tmux remotely. It enables orchestrating multiple terminal sessions (each running Claude or other AI agents) without needing direct SSH access. Built with Fastify + React.
+tmux-api is a stateless REST API server for controlling tmux remotely. It enables managing multiple terminal sessions without needing direct SSH access. Built with Fastify + React.
 
-**Why it exists:** The developer manages multiple Claude AI agents running in tmux sessions on a remote server via Termius/SSH. Connection drops kill sessions. Foreman solves this by providing persistent tmux sessions controlled via HTTP API, with a future goal of building an agent that monitors all workers autonomously.
+**Why it exists:** The developer manages multiple AI agents running in tmux sessions on a remote server. Connection drops kill sessions. tmux-api solves this by providing persistent tmux sessions controlled via HTTP API.
+
+> **Note:** Agent management (blueprints, lifecycle, orchestration) has moved to the separate **foreman** project, which consumes tmux-api as its backend.
 
 ## Tech Stack
 
 - **Backend:** Fastify (Node.js, ESM)
-- **Frontend:** React + Vite + Tailwind CSS v4 + shadcn/ui (authenticated SPA)
-- **Auth:** OAuth 2.0 PKCE via `@yaotoshi/auth-sdk`, dual auth (API key + Bearer token)
+- **Frontend:** React + Vite + Tailwind CSS v4 + shadcn/ui (public SPA)
+- **Auth:** Dual auth — API key (`X-API-Key`) + Bearer token (validated against accounts service)
 - **Testing:** Vitest (integration tests against real tmux)
 - **Serving:** Fastify serves both API and static frontend via @fastify/static
 - **Container:** Docker multi-stage (node:20-alpine + tmux)
@@ -18,14 +20,12 @@ Foreman is a REST API server for controlling tmux remotely. It enables orchestra
 
 ## Layer Architecture
 
-Foreman uses a 4-layer service architecture:
+tmux-api uses a 2-layer service architecture:
 
-| Layer | Service | Route | Status |
-|-------|---------|-------|--------|
-| L1 | `TerminalService` | `/api/terminals` | Active — raw tmux primitives |
-| L2 | `SessionService` | `/api/sessions` | Active — managed running instances |
-| L3 | `AgentService` | `/api/agents` | Planned — blueprints + lifecycle |
-| L4 | `OrchestratorService` | `/api/orchestrator` | Planned — fleet management |
+| Layer | Service | Route | Description |
+|-------|---------|-------|-------------|
+| L1 | `TerminalService` | `/api/terminals` | Raw tmux primitives (stateless) |
+| L2 | `SessionService` | `/api/sessions` | Stateless convenience wrapper over L1 |
 
 See `docs/architecture.md` for full architecture details.
 
@@ -35,32 +35,24 @@ See `docs/architecture.md` for full architecture details.
 src/server/              — Backend (Fastify)
   index.js               — Entry point, wires plugins + routes
   services/terminal.js   — TerminalService class (core, wraps tmux binary)
-  services/session.js    — SessionService class (manages running instances)
+  services/session.js    — SessionService class (stateless wrapper over L1)
   plugins/auth.js        — Dual auth: API key + Bearer token validation
   plugins/swagger.js     — Swagger UI at /docs
   routes/terminals.js    — Terminal CRUD (L1)
   routes/sessions.js     — Session CRUD (L2)
   routes/windows.js      — Window CRUD (nested under terminals)
   routes/panes.js        — Pane CRUD + send-keys + capture (nested under terminals)
-  routes/authProxy.js    — Proxies /auth/proxy/* to accounts service
 
-src/frontend/            — Frontend (React SPA)
-  App.jsx                — React Router setup, sidebar + main layout
+src/frontend/            — Frontend (React SPA, all public)
+  App.jsx                — React Router setup, layout + routes
   main.jsx               — Entry point, BrowserRouter wrapper
-  lib/auth.js            — YaotoshiAuth singleton + apiUrl override
-  lib/api.js             — API helper (fetch with Bearer token)
   lib/utils.js           — cn() helper (clsx + tailwind-merge)
-  components/Sidebar.jsx — Fixed sidebar with nav links + auth
-  components/ProtectedRoute.jsx — Auth guard, redirects to /
-  components/ConfirmModal.jsx   — Kill confirmation (shadcn AlertDialog)
-  components/Section.jsx        — Tutorial section wrapper (shadcn Card)
-  components/ShortcutTable.jsx  — Shortcut table (shadcn Table)
-  components/TerminalSimulator.jsx — Interactive terminal mockup
-  components/terminal-styles.js — Tailwind class constants for sections
+  layouts/AppLayout.jsx  — Sidebar + main content layout
+  components/Sidebar.jsx — Fixed sidebar with nav links
   components/ui/         — shadcn/ui primitives (button, table, card, alert, etc.)
-  pages/                 — HomePage, SessionsPage, KnowledgeBasePage, CallbackPage
-  sections/              — 6 tutorial sections (Indonesian)
-  hooks/                 — use-mobile.jsx
+  pages/HomePage.jsx     — Home page
+  pages/AboutTmuxPage.jsx — About Tmux tutorial page
+  hooks/use-mobile.jsx   — Mobile detection hook
 
 src/index.css            — Tailwind directives + shadcn dark theme CSS vars
 
@@ -90,44 +82,31 @@ npm run test:watch    # Watch mode
 - **Name validation** — Session/window names must match `^[a-zA-Z0-9_-]+$` (enforced at route schema level) to prevent tmux target syntax injection.
 - **send-keys maxLength** — Limited to 4096 chars to prevent resource exhaustion.
 - **Dual auth** — `/api/*` routes accept either `X-API-Key` header or `Authorization: Bearer <token>`. API key is checked first (no network call). Bearer token is validated against the accounts service `GET /api/proxy/me`.
-- **Auth proxy** — `/auth/proxy/*` routes forward to accounts service `/api/proxy/*` (token exchange, /me, logout). This avoids CORS issues since the SDK makes same-origin requests.
 - **Localhost only** — Docker binds `127.0.0.1`. Use cloudflared for external access.
 
 ### Patterns
 - **Route schemas** — Every route has JSON Schema for request validation AND Swagger auto-generation. If you add a route, always include schema.
 - **Response envelope** — Always return `{ success: true, data: ... }` or `{ success: false, error: "..." }`.
 - **TerminalService is stateless** — One instance decorated on Fastify app as `fastify.terminal`. Routes access it via `const { terminal } = fastify`.
-- **SessionService** — Decorated on Fastify app as `fastify.sessionService`. Manages L2 session lifecycle on top of TerminalService.
+- **SessionService is stateless** — Decorated on Fastify app as `fastify.sessionService`. Thin convenience wrapper over TerminalService. No database, no state tracking.
 - **Output parsing** — Tmux `-F` flag with `|` delimiter. Never parse free-text output.
 - **fastify-plugin** — Auth and swagger plugins use `fp()` wrapper for global scope (not scoped to registering plugin).
 
 ### Frontend
-- **Tailwind CSS v4 + shadcn/ui** — All styling via Tailwind utility classes. shadcn components for UI primitives (Button, Table, Card, AlertDialog, Badge, Alert, Separator).
+- **Tailwind CSS v4 + shadcn/ui** — All styling via Tailwind utility classes. shadcn components for UI primitives.
 - **No shadcn Sidebar** — shadcn Sidebar component's `peer-data-*` selectors don't work with Tailwind v4. Use plain fixed `<aside>` with `ml-64` on content instead.
 - **shadcn dark theme** — Default neutral dark. CSS variables in `src/index.css`, `<html class="dark">`.
 - **Path alias** — `@` maps to `src/frontend/` (configured in vite.config.js + jsconfig.json).
 - Content is in **Indonesian** (Bahasa Indonesia) for tutorial sections.
-- **Auth flow** — `@yaotoshi/auth-sdk` with `apiUrl()` override to use local `/auth/proxy/*` (avoids CORS). See `src/frontend/lib/auth.js`.
-- **Public pages:** `/` (home), `/knowledge-base`, `/docs` (Swagger). **Protected:** `/sessions` (requires login).
-
-### @yaotoshi/auth-sdk Gotchas
-1. **CORS trap** — SDK API calls (token, /me, logout) go cross-origin by default. Override `auth.apiUrl = (path) => '/auth/proxy' + path` to route through backend proxy.
-2. **Accounts API path** — `accounts.yaotoshi.xyz` is a Next.js frontend. The API is at `/api/proxy/*`, not root. Backend auth proxy and auth plugin must use `/api/proxy/me`, `/api/proxy/token`, etc.
+- **All pages are public:** `/` (home), `/about-tmux`, `/docs` (Swagger). No authentication required for frontend.
 
 ## Environment Variables
 
 ```
-# Backend
 API_KEY=<required>                  # API key for external client auth
 PORT=9993                           # Server port (default: 9993)
 SWAGGER_ENABLED=true                # Set to "false" to disable Swagger UI
 AUTH_ACCOUNTS_URL=<accounts URL>    # Accounts service URL for Bearer token validation
-
-# Frontend (Vite — must be prefixed with VITE_)
-VITE_AUTH_CLIENT_ID=<oauth client id>
-VITE_AUTH_ACCOUNTS_URL=<accounts URL>     # MUST match AUTH_ACCOUNTS_URL
-VITE_AUTH_REDIRECT_URI=<callback URL>     # e.g. https://foreman.yaotoshi.xyz/callback
-VITE_AUTH_POST_LOGOUT_URI=<post logout>   # e.g. https://foreman.yaotoshi.xyz
 ```
 
 See `.env.example` for full documentation.
@@ -160,7 +139,7 @@ npm test
 1. Write test file in `tests/routes/` following existing patterns
 2. Use `app.inject()` for HTTP simulation (no real server needed)
 3. Create test sessions in `beforeEach`, clean up in `afterEach`/`afterAll`
-4. Always test both auth methods (API key and Bearer token should 401 without credentials)
+4. Always test auth (API key required, should 401 without credentials)
 
 ## Adding New Features
 
@@ -173,14 +152,3 @@ npm test
 7. For frontend changes: use shadcn components, Tailwind classes, no CSS Modules
 8. Commit with conventional commits
 9. Merge to `develop`
-
-## Future Direction
-
-Foreman is evolving from a tmux API into an **AI workforce manager** using a 4-layer architecture:
-
-- **L1 TerminalService** (`/api/terminals`) — Active. Raw tmux primitives (create, kill, capture, send-keys).
-- **L2 SessionService** (`/api/sessions`) — Active. Managed running instances with state tracking, events, and DB persistence.
-- **L3 AgentService** (`/api/agents`) — Planned. Agent blueprints, lifecycle management, auto-recovery when sessions die.
-- **L4 OrchestratorService** (`/api/orchestrator`) — Planned. Fleet management, task distribution across multiple agents, status dashboard.
-
-See `docs/architecture.md` for the full architecture design.

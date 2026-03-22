@@ -1,14 +1,14 @@
-# Foreman
+# tmux-api
 
-REST API server for controlling tmux remotely. Deploy the server, hit endpoints from any language or tool.
+Stateless REST API server for controlling tmux remotely. Deploy the server, hit endpoints from any language or tool.
 
 ## Architecture
 
 ```mermaid
 graph TB
-    Client["Client (curl, SDK, Agent)"] -->|HTTP + X-API-Key| Foreman
+    Client["Client (curl, SDK, Agent)"] -->|HTTP + X-API-Key| Server
 
-    subgraph Foreman["Foreman Server :9993"]
+    subgraph Server["tmux-api Server :9993"]
         direction TB
         Auth["Auth Plugin<br/>API Key validation"]
         Swagger["Swagger UI<br/>/docs"]
@@ -20,13 +20,13 @@ graph TB
             Panes["Panes<br/>CRUD + Control"]
         end
 
-        Service["TmuxService<br/>execFile wrapper"]
+        Service["TerminalService<br/>execFile wrapper"]
         Static["Static Frontend<br/>Tutorial + Docs"]
     end
 
     Service -->|execFile| Tmux["tmux binary"]
-    Tmux --> Terminal1["Session 1<br/>Claude Agent"]
-    Tmux --> Terminal2["Session 2<br/>Claude Agent"]
+    Tmux --> Terminal1["Session 1"]
+    Tmux --> Terminal2["Session 2"]
     Tmux --> Terminal3["Session N<br/>..."]
 
     Auth --> Routes
@@ -39,7 +39,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant C as Client
-    participant F as Foreman API
+    participant F as tmux-api
     participant T as tmux
 
     C->>F: POST /api/sessions {name: "worker-1"}
@@ -69,8 +69,8 @@ sequenceDiagram
 ### Local
 
 ```bash
-git clone https://github.com/onchainyaotoshi/foreman.git
-cd foreman
+git clone https://github.com/onchainyaotoshi/tmux-api.git
+cd tmux-api
 
 npm install
 cp .env.example .env   # edit API_KEY
@@ -171,22 +171,24 @@ curl -s $API/api/sessions/worker-1/windows/0/panes/0/capture \
 ## Project Structure
 
 ```
-foreman/
+tmux-api/
 ├── src/
 │   ├── server/
 │   │   ├── index.js              # Fastify entry point
 │   │   ├── plugins/
-│   │   │   ├── auth.js           # API key auth
+│   │   │   ├── auth.js           # API key + Bearer token auth
 │   │   │   └── swagger.js        # Swagger/OpenAPI
 │   │   ├── routes/
-│   │   │   ├── sessions.js       # Session endpoints
+│   │   │   ├── terminals.js      # Terminal endpoints (L1)
+│   │   │   ├── sessions.js       # Session endpoints (L2)
 │   │   │   ├── windows.js        # Window endpoints
 │   │   │   └── panes.js          # Pane + control endpoints
 │   │   └── services/
-│   │       └── tmux.js           # TmuxService (execFile wrapper)
+│   │       ├── terminal.js       # TerminalService (L1, core)
+│   │       └── session.js        # SessionService (L2, stateless wrapper)
 │   ├── frontend/                  # React tutorial app
 │   └── index.css
-├── tests/                         # Vitest test suites
+├── tests/                         # Vitest integration tests
 ├── .env.example
 ├── Dockerfile
 ├── docker-compose.yml
