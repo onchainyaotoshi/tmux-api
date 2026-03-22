@@ -44,7 +44,7 @@ await app.register(authPlugin, { apiKey: API_KEY, authAccountsUrl: AUTH_ACCOUNTS
 await app.register(rateLimit, {
   max: 100,
   timeWindow: '1 minute',
-  keyGenerator: (request) => request.headers['x-api-key'] || request.ip,
+  keyGenerator: (request) => request.headers['x-api-key'] || request.headers['authorization'] || request.ip,
   hook: 'onRequest',
   allowList: [],
 })

@@ -24,7 +24,7 @@ async function auth(fastify, opts) {
       }
     }
 
-    reply.code(401).send({ success: false, error: 'Missing or invalid API key' })
+    reply.code(401).send({ success: false, error: 'Unauthorized' })
   })
 }
 

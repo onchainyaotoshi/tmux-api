@@ -20,7 +20,7 @@ describe('authPlugin', () => {
   it('should reject /api/* requests without X-API-Key', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/test' })
     expect(res.statusCode).toBe(401)
-    expect(res.json()).toEqual({ success: false, error: 'Missing or invalid API key' })
+    expect(res.json()).toEqual({ success: false, error: 'Unauthorized' })
   })
 
   it('should reject /api/* requests with wrong key', async () => {
