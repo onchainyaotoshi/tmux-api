@@ -101,7 +101,7 @@ export class DatabaseService {
 
   listEvents(workerId, limit = 50) {
     const rows = this.db.prepare(
-      'SELECT * FROM worker_events WHERE worker_id = ? ORDER BY created_at DESC LIMIT ?'
+      'SELECT * FROM worker_events WHERE worker_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?'
     ).all(workerId, limit)
     return rows.map(row => {
       if (row.data) row.data = JSON.parse(row.data)
