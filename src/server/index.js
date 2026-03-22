@@ -16,6 +16,8 @@ import { authProxyRoutes } from './routes/authProxy.js'
 import { DatabaseService } from './services/database.js'
 import { SessionService } from './services/session.js'
 import { sessionRoutes } from './routes/sessions.js'
+import { AgentService } from './services/agent.js'
+import { agentRoutes } from './routes/agents.js'
 import { healthRoutes } from './routes/health.js'
 import { eventRoutes } from './routes/events.js'
 
@@ -42,6 +44,7 @@ const db = new DatabaseService(join(dataDir, 'foreman.db'))
 db.init()
 app.decorate('db', db)
 app.decorate('sessionService', new SessionService(app.terminal, db))
+app.decorate('agentService', new AgentService(db, app.sessionService))
 
 // Graceful shutdown
 app.addHook('onClose', () => db.close())
@@ -76,6 +79,7 @@ await app.register(paneRoutes, { prefix: '/api' })
 await app.register(sessionRoutes, { prefix: '/api' })
 await app.register(healthRoutes, { prefix: '/api' })
 await app.register(eventRoutes, { prefix: '/api' })
+await app.register(agentRoutes, { prefix: '/api' })
 
 // Serve static frontend (only if dist/ exists)
 const distPath = join(__dirname, '../../dist')
