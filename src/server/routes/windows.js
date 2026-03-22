@@ -1,35 +1,35 @@
 export async function windowRoutes(fastify) {
   const { terminal } = fastify
 
-  const sessionParam = {
+  const terminalParam = {
     type: 'object',
-    properties: { session: { type: 'string' } },
+    properties: { terminal: { type: 'string' } },
   }
 
-  const sessionWindowParams = {
+  const terminalWindowParams = {
     type: 'object',
     properties: {
-      session: { type: 'string' },
+      terminal: { type: 'string' },
       index: { type: 'string' },
     },
   }
 
-  fastify.get('/sessions/:session/windows', {
+  fastify.get('/terminals/:terminal/windows', {
     schema: {
-      tags: ['Windows'],
-      summary: 'List windows in a session',
-      params: sessionParam,
+      tags: ['L1 — Terminal (Low-level)'],
+      summary: 'List windows in a terminal',
+      params: terminalParam,
     },
   }, async (request) => {
-    const data = await terminal.listWindows(request.params.session)
+    const data = await terminal.listWindows(request.params.terminal)
     return { success: true, data }
   })
 
-  fastify.post('/sessions/:session/windows', {
+  fastify.post('/terminals/:terminal/windows', {
     schema: {
-      tags: ['Windows'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Create a new window',
-      params: sessionParam,
+      params: terminalParam,
       body: {
         type: 'object',
         properties: {
@@ -38,16 +38,16 @@ export async function windowRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    await terminal.createWindow(request.params.session, request.body?.name)
+    await terminal.createWindow(request.params.terminal, request.body?.name)
     reply.code(201)
     return { success: true, data: null }
   })
 
-  fastify.put('/sessions/:session/windows/:index', {
+  fastify.put('/terminals/:terminal/windows/:index', {
     schema: {
-      tags: ['Windows'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Rename a window',
-      params: sessionWindowParams,
+      params: terminalWindowParams,
       body: {
         type: 'object',
         required: ['newName'],
@@ -57,20 +57,20 @@ export async function windowRoutes(fastify) {
       },
     },
   }, async (request) => {
-    const { session, index } = request.params
-    await terminal.renameWindow(session, parseInt(index, 10), request.body.newName)
+    const { terminal: terminalName, index } = request.params
+    await terminal.renameWindow(terminalName, parseInt(index, 10), request.body.newName)
     return { success: true, data: null }
   })
 
-  fastify.delete('/sessions/:session/windows/:index', {
+  fastify.delete('/terminals/:terminal/windows/:index', {
     schema: {
-      tags: ['Windows'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Kill a window',
-      params: sessionWindowParams,
+      params: terminalWindowParams,
     },
   }, async (request) => {
-    const { session, index } = request.params
-    await terminal.killWindow(session, parseInt(index, 10))
+    const { terminal: terminalName, index } = request.params
+    await terminal.killWindow(terminalName, parseInt(index, 10))
     return { success: true, data: null }
   })
 }

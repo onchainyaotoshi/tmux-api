@@ -1,10 +1,10 @@
-export async function sessionRoutes(fastify) {
+export async function terminalRoutes(fastify) {
   const { terminal } = fastify
 
-  fastify.get('/sessions', {
+  fastify.get('/terminals', {
     schema: {
-      tags: ['Sessions'],
-      summary: 'List all tmux sessions',
+      tags: ['L1 — Terminal (Low-level)'],
+      summary: 'List all terminals',
       response: {
         200: {
           type: 'object',
@@ -30,10 +30,10 @@ export async function sessionRoutes(fastify) {
     return { success: true, data }
   })
 
-  fastify.post('/sessions', {
+  fastify.post('/terminals', {
     schema: {
-      tags: ['Sessions'],
-      summary: 'Create a new session',
+      tags: ['L1 — Terminal (Low-level)'],
+      summary: 'Create a new terminal',
       body: {
         type: 'object',
         required: ['name'],
@@ -60,13 +60,13 @@ export async function sessionRoutes(fastify) {
     return { success: true, data }
   })
 
-  fastify.put('/sessions/:name', {
+  fastify.put('/terminals/:terminal', {
     schema: {
-      tags: ['Sessions'],
-      summary: 'Rename a session',
+      tags: ['L1 — Terminal (Low-level)'],
+      summary: 'Rename a terminal',
       params: {
         type: 'object',
-        properties: { name: { type: 'string' } },
+        properties: { terminal: { type: 'string' } },
       },
       body: {
         type: 'object',
@@ -77,21 +77,21 @@ export async function sessionRoutes(fastify) {
       },
     },
   }, async (request) => {
-    await terminal.renameSession(request.params.name, request.body.newName)
+    await terminal.renameSession(request.params.terminal, request.body.newName)
     return { success: true, data: { name: request.body.newName } }
   })
 
-  fastify.delete('/sessions/:name', {
+  fastify.delete('/terminals/:terminal', {
     schema: {
-      tags: ['Sessions'],
-      summary: 'Kill a session',
+      tags: ['L1 — Terminal (Low-level)'],
+      summary: 'Kill a terminal',
       params: {
         type: 'object',
-        properties: { name: { type: 'string' } },
+        properties: { terminal: { type: 'string' } },
       },
     },
   }, async (request) => {
-    await terminal.killSession(request.params.name)
+    await terminal.killSession(request.params.terminal)
     return { success: true, data: null }
   })
 }

@@ -9,7 +9,7 @@ import 'dotenv/config'
 import { TerminalService } from './services/terminal.js'
 import { authPlugin } from './plugins/auth.js'
 import { swaggerSetup } from './plugins/swagger.js'
-import { sessionRoutes } from './routes/sessions.js'
+import { terminalRoutes } from './routes/terminals.js'
 import { windowRoutes } from './routes/windows.js'
 import { paneRoutes } from './routes/panes.js'
 import { authProxyRoutes } from './routes/authProxy.js'
@@ -70,7 +70,7 @@ await app.register(rateLimit, {
 })
 
 // API routes
-await app.register(sessionRoutes, { prefix: '/api' })
+await app.register(terminalRoutes, { prefix: '/api' })
 await app.register(windowRoutes, { prefix: '/api' })
 await app.register(paneRoutes, { prefix: '/api' })
 await app.register(workerRoutes, { prefix: '/api' })

@@ -4,7 +4,7 @@ export async function paneRoutes(fastify) {
   const paneParams = {
     type: 'object',
     properties: {
-      session: { type: 'string' },
+      terminal: { type: 'string' },
       window: { type: 'string' },
     },
   }
@@ -12,27 +12,27 @@ export async function paneRoutes(fastify) {
   const paneIndexParams = {
     type: 'object',
     properties: {
-      session: { type: 'string' },
+      terminal: { type: 'string' },
       window: { type: 'string' },
       index: { type: 'string' },
     },
   }
 
-  fastify.get('/sessions/:session/windows/:window/panes', {
+  fastify.get('/terminals/:terminal/windows/:window/panes', {
     schema: {
-      tags: ['Panes'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'List panes in a window',
       params: paneParams,
     },
   }, async (request) => {
-    const { session, window } = request.params
-    const data = await terminal.listPanes(session, parseInt(window, 10))
+    const { terminal: terminalName, window } = request.params
+    const data = await terminal.listPanes(terminalName, parseInt(window, 10))
     return { success: true, data }
   })
 
-  fastify.post('/sessions/:session/windows/:window/panes', {
+  fastify.post('/terminals/:terminal/windows/:window/panes', {
     schema: {
-      tags: ['Panes'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Split pane',
       params: paneParams,
       body: {
@@ -44,15 +44,15 @@ export async function paneRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    const { session, window } = request.params
-    await terminal.splitPane(session, parseInt(window, 10), request.body.direction)
+    const { terminal: terminalName, window } = request.params
+    await terminal.splitPane(terminalName, parseInt(window, 10), request.body.direction)
     reply.code(201)
     return { success: true, data: null }
   })
 
-  fastify.put('/sessions/:session/windows/:window/panes/:index/resize', {
+  fastify.put('/terminals/:terminal/windows/:window/panes/:index/resize', {
     schema: {
-      tags: ['Panes'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Resize a pane',
       params: paneIndexParams,
       body: {
@@ -65,27 +65,27 @@ export async function paneRoutes(fastify) {
       },
     },
   }, async (request) => {
-    const { session, window, index } = request.params
+    const { terminal: terminalName, window, index } = request.params
     const { direction, amount } = request.body
-    await terminal.resizePane(session, parseInt(window, 10), parseInt(index, 10), direction, amount)
+    await terminal.resizePane(terminalName, parseInt(window, 10), parseInt(index, 10), direction, amount)
     return { success: true, data: null }
   })
 
-  fastify.delete('/sessions/:session/windows/:window/panes/:index', {
+  fastify.delete('/terminals/:terminal/windows/:window/panes/:index', {
     schema: {
-      tags: ['Panes'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Kill a pane',
       params: paneIndexParams,
     },
   }, async (request) => {
-    const { session, window, index } = request.params
-    await terminal.killPane(session, parseInt(window, 10), parseInt(index, 10))
+    const { terminal: terminalName, window, index } = request.params
+    await terminal.killPane(terminalName, parseInt(window, 10), parseInt(index, 10))
     return { success: true, data: null }
   })
 
-  fastify.post('/sessions/:session/windows/:window/panes/:index/send-keys', {
+  fastify.post('/terminals/:terminal/windows/:window/panes/:index/send-keys', {
     schema: {
-      tags: ['Panes'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Send keys to a pane',
       params: paneIndexParams,
       body: {
@@ -97,20 +97,20 @@ export async function paneRoutes(fastify) {
       },
     },
   }, async (request) => {
-    const { session, window, index } = request.params
-    await terminal.sendKeys(session, parseInt(window, 10), parseInt(index, 10), request.body.keys)
+    const { terminal: terminalName, window, index } = request.params
+    await terminal.sendKeys(terminalName, parseInt(window, 10), parseInt(index, 10), request.body.keys)
     return { success: true, data: null }
   })
 
-  fastify.get('/sessions/:session/windows/:window/panes/:index/capture', {
+  fastify.get('/terminals/:terminal/windows/:window/panes/:index/capture', {
     schema: {
-      tags: ['Panes'],
+      tags: ['L1 — Terminal (Low-level)'],
       summary: 'Capture pane output',
       params: paneIndexParams,
     },
   }, async (request) => {
-    const { session, window, index } = request.params
-    const content = await terminal.capturePane(session, parseInt(window, 10), parseInt(index, 10))
+    const { terminal: terminalName, window, index } = request.params
+    const content = await terminal.capturePane(terminalName, parseInt(window, 10), parseInt(index, 10))
     return { success: true, data: { content } }
   })
 }
