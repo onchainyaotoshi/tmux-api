@@ -13,5 +13,5 @@ RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY src/server ./src/server
 COPY .env.example .env.example
-EXPOSE 9997
+EXPOSE ${PORT:-9993}
 CMD ["node", "src/server/index.js"]

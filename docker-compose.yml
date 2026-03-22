@@ -2,7 +2,7 @@ services:
   foreman:
     build: .
     ports:
-      - "127.0.0.1:${PORT:-9997}:${PORT:-9997}"
+      - "127.0.0.1:${PORT:-9993}:${PORT:-9993}"
     env_file: .env
     volumes:
       - /tmp:/tmp

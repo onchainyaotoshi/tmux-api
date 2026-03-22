@@ -13,7 +13,7 @@ Foreman is a REST API server for controlling tmux remotely. It enables orchestra
 - **Testing:** Vitest (integration tests against real tmux)
 - **Serving:** Fastify serves both API and static frontend via @fastify/static
 - **Container:** Docker multi-stage (node:20-alpine + tmux)
-- **Port:** 9997 (localhost only, expose via cloudflared)
+- **Port:** 9993 (localhost only, expose via cloudflared)
 
 ## Project Structure
 
@@ -78,7 +78,7 @@ npm run test:watch    # Watch mode
 
 ```
 API_KEY=<required>        # API key for authentication
-PORT=9997                 # Server port (default: 9997)
+PORT=9993                 # Server port (default: 9993)
 SWAGGER_ENABLED=true      # Set to "false" to disable Swagger UI
 ```
 

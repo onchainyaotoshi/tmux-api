@@ -8,7 +8,7 @@ REST API server untuk kontrol tmux secara remote. Deploy server, hit endpoint da
 graph TB
     Client["Client (curl, SDK, Agent)"] -->|HTTP + X-API-Key| Foreman
 
-    subgraph Foreman["Foreman Server :9997"]
+    subgraph Foreman["Foreman Server :9993"]
         direction TB
         Auth["Auth Plugin<br/>API Key validation"]
         Swagger["Swagger UI<br/>/docs"]
@@ -89,12 +89,12 @@ cp .env.example .env   # edit API_KEY
 docker compose up -d
 ```
 
-Server berjalan di `http://127.0.0.1:9997` (localhost only).
+Server berjalan di `http://127.0.0.1:9993` (localhost only).
 
 ### Expose ke Internet
 
 ```bash
-cloudflared tunnel --url http://localhost:9997
+cloudflared tunnel --url http://localhost:9993
 ```
 
 ## API Endpoints
@@ -137,12 +137,12 @@ X-API-Key: your-api-key
 
 ### Swagger UI
 
-Buka `http://localhost:9997/docs` untuk interactive API documentation.
+Buka `http://localhost:9993/docs` untuk interactive API documentation.
 
 ## Usage Examples
 
 ```bash
-API="http://localhost:9997"
+API="http://localhost:9993"
 KEY="your-api-key"
 
 # Create a session
