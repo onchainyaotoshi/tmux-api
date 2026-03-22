@@ -14,7 +14,7 @@ import { windowRoutes } from './routes/windows.js'
 import { paneRoutes } from './routes/panes.js'
 import { authProxyRoutes } from './routes/authProxy.js'
 import { DatabaseService } from './services/database.js'
-import { WorkerService } from './services/worker.js'
+import { SessionService } from './services/session.js'
 import { workerRoutes } from './routes/workers.js'
 import { healthRoutes } from './routes/health.js'
 import { eventRoutes } from './routes/events.js'
@@ -35,13 +35,13 @@ const app = Fastify({ logger: true })
 // Decorate with TerminalService
 app.decorate('terminal', new TerminalService())
 
-// Database + WorkerService
+// Database + SessionService
 const dataDir = join(__dirname, '../../data')
 mkdirSync(dataDir, { recursive: true })
 const db = new DatabaseService(join(dataDir, 'foreman.db'))
 db.init()
 app.decorate('db', db)
-app.decorate('workerService', new WorkerService(app.terminal, db))
+app.decorate('sessionService', new SessionService(app.terminal, db))
 
 // Graceful shutdown
 app.addHook('onClose', () => db.close())
