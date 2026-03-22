@@ -1,0 +1,84 @@
+.container {
+  max-width: 800px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.header h2 {
+  font-size: 1.5rem;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.refreshBtn {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.refreshBtn:hover {
+  background: rgba(0, 255, 65, 0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sessionName {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.killBtn {
+  padding: 6px 14px;
+  background: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.killBtn:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 40px;
+}
+
+.error {
+  color: #dc3545;
+  padding: 16px;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
