@@ -95,23 +95,6 @@ function TerminalDemo({ title, steps }) {
   )
 }
 
-/* ── Styling Migration Reference ───────────────────────────────── */
-//
-// Old terminal-styles.js classes → New Tailwind replacements:
-//   ts.paneContainer        → 'flex h-[180px] transition-all duration-300'
-//   ts.paneContainerVertical→ 'flex-col' (add to paneContainer)
-//   ts.pane                 → 'flex-1 p-2.5 text-muted-foreground flex items-center justify-center transition-all duration-300 border border-border text-sm'
-//   ts.paneActive           → 'border-primary bg-primary/10' (was border-primary bg-primary/5)
-//   ts.output               → 'text-muted-foreground whitespace-pre-wrap leading-relaxed'
-//   ts.prompt               → 'text-primary' (keep as-is)
-//
-// Inline style color replacements (hardcoded green → blue):
-//   rgba(0,255,65,0.15) → rgba(59,130,246,0.15)   (WindowSection active tab)
-//   rgba(0,255,65,0.2)  → rgba(59,130,246,0.2)    (CopyMode cursor highlight)
-//   rgba(0,255,65,0.3)  → rgba(59,130,246,0.3)    (CopyMode selection)
-//   #00ff41             → var(--primary)            (CopyMode selected text color)
-//   backgroundColor: '#00ff41', color: '#000' → backgroundColor: 'rgb(59,130,246)', color: '#fff' (search highlight)
-
 /* ── Section 1: Session ────────────────────────────────────────── */
 
 const sessionShortcuts = [
