@@ -2,14 +2,29 @@ import fp from 'fastify-plugin'
 
 async function auth(fastify, opts) {
   const apiKey = opts.apiKey
+  const authAccountsUrl = opts.authAccountsUrl
 
   fastify.addHook('onRequest', async (request, reply) => {
     if (!request.url.startsWith('/api/')) return
 
-    const provided = request.headers['x-api-key']
-    if (!provided || provided !== apiKey) {
-      reply.code(401).send({ success: false, error: 'Missing or invalid API key' })
+    // Try API key first
+    const providedKey = request.headers['x-api-key']
+    if (providedKey && providedKey === apiKey) return
+
+    // Try Bearer token
+    const authHeader = request.headers.authorization
+    if (authHeader && authHeader.startsWith('Bearer ') && authAccountsUrl) {
+      try {
+        const res = await fetch(`${authAccountsUrl}/me`, {
+          headers: { authorization: authHeader },
+        })
+        if (res.ok) return
+      } catch {
+        // Fall through to 401
+      }
     }
+
+    reply.code(401).send({ success: false, error: 'Missing or invalid API key' })
   })
 }
 

@@ -16,6 +16,7 @@ import { paneRoutes } from './routes/panes.js'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT || '9993', 10)
 const API_KEY = process.env.API_KEY
+const AUTH_ACCOUNTS_URL = process.env.AUTH_ACCOUNTS_URL
 const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED !== 'false'
 
 if (!API_KEY) {
@@ -39,7 +40,7 @@ app.setErrorHandler((error, request, reply) => {
 
 // Plugins
 await app.register(swaggerSetup, { enabled: SWAGGER_ENABLED })
-await app.register(authPlugin, { apiKey: API_KEY })
+await app.register(authPlugin, { apiKey: API_KEY, authAccountsUrl: AUTH_ACCOUNTS_URL })
 await app.register(rateLimit, {
   max: 100,
   timeWindow: '1 minute',
