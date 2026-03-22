@@ -6,6 +6,8 @@ const workerSchema = {
     id: { type: 'string' },
     name: { type: 'string' },
     command: { type: 'string' },
+    cwd: { type: ['string', 'null'] },
+    event_token: { type: ['string', 'null'] },
     status: { type: 'string' },
     current_task: { type: ['string', 'null'] },
     created_at: { type: 'string' },
@@ -27,6 +29,7 @@ export async function workerRoutes(fastify) {
         properties: {
           name: { type: 'string', minLength: 1, maxLength: 128, pattern: namePattern },
           command: { type: 'string', minLength: 1, maxLength: 4096 },
+          cwd: { type: 'string', pattern: '^/', maxLength: 4096 },
         },
       },
       response: {
@@ -40,8 +43,8 @@ export async function workerRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    const { name, command } = request.body
-    const data = await workerService.spawn(name, command)
+    const { name, command, cwd } = request.body
+    const data = await workerService.spawn(name, command, cwd)
     reply.code(201)
     return { success: true, data }
   })
@@ -54,7 +57,7 @@ export async function workerRoutes(fastify) {
       querystring: {
         type: 'object',
         properties: {
-          status: { type: 'string', enum: ['spawning', 'idle', 'running', 'failed', 'stopped'] },
+          status: { type: 'string', enum: ['spawning', 'idle', 'running', 'waiting_input', 'error', 'failed', 'stopped'] },
         },
       },
       response: {
@@ -91,6 +94,15 @@ export async function workerRoutes(fastify) {
               properties: {
                 ...workerSchema.properties,
                 output: { type: 'string' },
+                last_event: {
+                  type: ['object', 'null'],
+                  properties: {
+                    id: { type: 'string' },
+                    type: { type: 'string' },
+                    data: {},
+                    created_at: { type: 'string' },
+                  },
+                },
               },
             },
           },

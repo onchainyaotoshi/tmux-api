@@ -8,6 +8,9 @@ const TEST_SESSION = 'test-api-session'
 async function cleanup() {
   try { await tmux.killSession(TEST_SESSION) } catch {}
   try { await tmux.killSession('test-renamed') } catch {}
+  try { await tmux.killSession('cwd-test') } catch {}
+  try { await tmux.killSession('cwd-bad') } catch {}
+  try { await tmux.killSession('cwd-none') } catch {}
 }
 
 describe('TmuxService', () => {
@@ -148,6 +151,31 @@ describe('TmuxService', () => {
     it('should return false for non-existing session', async () => {
       const result = await tmux.hasSession('nonexistent-session-xyz')
       expect(result).toBe(false)
+    })
+  })
+
+  describe('createSession with cwd', () => {
+    it('should create session in specified directory', async () => {
+      await tmux.createSession('cwd-test', '/tmp')
+      // Run pwd to verify working directory
+      await tmux.sendKeys('cwd-test', '0', '0', 'pwd')
+      await tmux.sendKeys('cwd-test', '0', '0', 'Enter')
+      await new Promise(r => setTimeout(r, 500))
+      const out = await tmux.capturePane('cwd-test', '0', '0')
+      expect(out).toContain('/tmp')
+      await tmux.killSession('cwd-test')
+    })
+
+    it('should throw for non-existent cwd', async () => {
+      await expect(tmux.createSession('cwd-bad', '/nonexistent/path/xyz'))
+        .rejects.toThrow()
+    })
+
+    it('should work without cwd (backward compatible)', async () => {
+      await tmux.createSession('cwd-none')
+      const exists = await tmux.hasSession('cwd-none')
+      expect(exists).toBe(true)
+      await tmux.killSession('cwd-none')
     })
   })
 })

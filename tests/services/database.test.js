@@ -102,4 +102,59 @@ describe('DatabaseService', () => {
       expect(worker.status).toBe('stopped')
     })
   })
+
+  describe('cwd and event_token columns', () => {
+    it('should store cwd and event_token', () => {
+      const worker = db.createWorker({
+        id: 'cwd-test-id',
+        name: 'cwd-worker',
+        command: 'claude',
+        cwd: '/home/claude/project',
+        event_token: 'token-123',
+      })
+      expect(worker.cwd).toBe('/home/claude/project')
+      expect(worker.event_token).toBe('token-123')
+    })
+
+    it('should allow null cwd', () => {
+      const worker = db.createWorker({
+        id: 'no-cwd-id',
+        name: 'no-cwd-worker',
+        command: 'bash',
+      })
+      expect(worker.cwd).toBeNull()
+    })
+  })
+
+  describe('worker_events', () => {
+    it('should create event', () => {
+      const event = db.createEvent({
+        id: 'evt-1',
+        worker_id: 'test-id-1',
+        type: 'notification',
+        data: { message: 'test' },
+      })
+      expect(event.id).toBe('evt-1')
+      expect(event.type).toBe('notification')
+      expect(event.data).toEqual({ message: 'test' })
+    })
+
+    it('should get last event', () => {
+      db.createEvent({ id: 'evt-2', worker_id: 'test-id-1', type: 'stop', data: null })
+      const last = db.getLastEvent('test-id-1')
+      expect(last.id).toBe('evt-2')
+      expect(last.type).toBe('stop')
+    })
+
+    it('should list events newest first', () => {
+      const events = db.listEvents('test-id-1', 50)
+      expect(events[0].id).toBe('evt-2')
+      expect(events[1].id).toBe('evt-1')
+    })
+
+    it('should return undefined for no events', () => {
+      const last = db.getLastEvent('no-events-worker')
+      expect(last).toBeUndefined()
+    })
+  })
 })
