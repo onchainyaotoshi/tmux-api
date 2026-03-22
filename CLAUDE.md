@@ -37,7 +37,7 @@ src/server/              — Backend (Fastify)
   services/terminal.js   — TerminalService class (core, wraps tmux binary)
   services/session.js    — SessionService class (stateless wrapper over L1)
   plugins/auth.js        — Dual auth: API key + Bearer token validation
-  plugins/swagger.js     — Swagger UI at /docs
+  plugins/swagger.js     — OpenAPI + Scalar docs at /docs
   routes/terminals.js    — Terminal CRUD (L1)
   routes/sessions.js     — Session CRUD (L2)
   routes/windows.js      — Window CRUD (nested under terminals)
@@ -85,7 +85,7 @@ npm run test:watch    # Watch mode
 - **Localhost only** — Docker binds `127.0.0.1`. Use cloudflared for external access.
 
 ### Patterns
-- **Route schemas** — Every route has JSON Schema for request validation AND Swagger auto-generation. If you add a route, always include schema.
+- **Route schemas** — Every route has JSON Schema for request validation AND OpenAPI auto-generation. If you add a route, always include schema.
 - **Response envelope** — Always return `{ success: true, data: ... }` or `{ success: false, error: "..." }`.
 - **TerminalService is stateless** — One instance decorated on Fastify app as `fastify.terminal`. Routes access it via `const { terminal } = fastify`.
 - **SessionService is stateless** — Decorated on Fastify app as `fastify.sessionService`. Thin convenience wrapper over TerminalService. No database, no state tracking.
@@ -98,14 +98,14 @@ npm run test:watch    # Watch mode
 - **shadcn dark theme** — Default neutral dark. CSS variables in `src/index.css`, `<html class="dark">`.
 - **Path alias** — `@` maps to `src/frontend/` (configured in vite.config.js + jsconfig.json).
 - Content is in **Indonesian** (Bahasa Indonesia) for tutorial sections.
-- **All pages are public:** `/` (home), `/about-tmux`, `/docs` (Swagger). No authentication required for frontend.
+- **All pages are public:** `/` (home), `/about-tmux`, `/docs` (Scalar API docs). No authentication required for frontend.
 
 ## Environment Variables
 
 ```
 API_KEY=<required>                  # API key for external client auth
 PORT=9993                           # Server port (default: 9993)
-SWAGGER_ENABLED=true                # Set to "false" to disable Swagger UI
+SWAGGER_ENABLED=true                # Set to "false" to disable Scalar API docs
 AUTH_ACCOUNTS_URL=<accounts URL>    # Accounts service URL for Bearer token validation
 ```
 
