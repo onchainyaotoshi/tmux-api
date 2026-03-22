@@ -47,7 +47,7 @@ const steps = [
       <div className={ts.output} style={{ height: '160px', overflow: 'hidden' }}>
         {logLines.map((line, i) => (
           <div key={i} style={i === 4 ? { backgroundColor: 'rgba(0,255,65,0.2)' } : {}}>
-            {i === 4 && <span style={{ color: '#00ff41' }}>▶ </span>}
+            {i === 4 && <span className="text-primary">▶ </span>}
             {line}
           </div>
         ))}
@@ -80,10 +80,10 @@ const steps = [
     render: () => (
       <div className={ts.output} style={{ height: '160px', overflow: 'hidden' }}>
         <span className={ts.prompt}>$ </span>▊{'\n'}
-        <span style={{ color: '#666' }}># Ctrl+B ] → teks di-paste:</span>{'\n'}
-        <span style={{ color: '#00ff41' }}>[10:04] POST /api/login 200 45ms</span>{'\n'}
-        <span style={{ color: '#00ff41' }}>[10:05] GET /api/dashboard 200 23ms</span>{'\n'}
-        <span style={{ color: '#00ff41' }}>[10:06] WebSocket connection established</span>
+        <span className="text-muted-foreground"># Ctrl+B ] → teks di-paste:</span>{'\n'}
+        <span className="text-primary">[10:04] POST /api/login 200 45ms</span>{'\n'}
+        <span className="text-primary">[10:05] GET /api/dashboard 200 23ms</span>{'\n'}
+        <span className="text-primary">[10:06] WebSocket connection established</span>
       </div>
     ),
   },

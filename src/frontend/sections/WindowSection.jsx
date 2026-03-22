@@ -21,8 +21,8 @@ function WindowTabs({ windows, active }) {
           style={{
             padding: '4px 12px',
             background: i === active ? 'rgba(0,255,65,0.15)' : 'transparent',
-            color: i === active ? '#00ff41' : '#666',
-            borderBottom: i === active ? '2px solid #00ff41' : '2px solid transparent',
+            color: i === active ? 'var(--primary)' : 'var(--muted-foreground)',
+            borderBottom: i === active ? '2px solid var(--primary)' : '2px solid transparent',
             fontFamily: 'var(--font-mono)',
             fontSize: '0.8rem',
           }}
@@ -41,7 +41,7 @@ const steps = [
       <div>
         <WindowTabs windows={['bash', 'bash']} active={1} />
         <div className={ts.output}>
-          <span style={{ color: '#666' }}># Ctrl+B c → window baru terbuat</span>{'\n'}
+          <span className="text-muted-foreground"># Ctrl+B c → window baru terbuat</span>{'\n'}
           <span className={ts.prompt}>$ </span>▊
         </div>
       </div>
@@ -54,7 +54,7 @@ const steps = [
       <div>
         <WindowTabs windows={['editor', 'bash']} active={0} />
         <div className={ts.output}>
-          <span style={{ color: '#666' }}># Ctrl+B , → ketik nama baru → Enter</span>{'\n'}
+          <span className="text-muted-foreground"># Ctrl+B , → ketik nama baru → Enter</span>{'\n'}
           <span className={ts.prompt}>$ </span>vim app.js
         </div>
       </div>
@@ -67,7 +67,7 @@ const steps = [
       <div>
         <WindowTabs windows={['editor', 'bash', 'logs']} active={2} />
         <div className={ts.output}>
-          <span style={{ color: '#666' }}># Ctrl+B n/p atau Ctrl+B 0-9</span>{'\n'}
+          <span className="text-muted-foreground"># Ctrl+B n/p atau Ctrl+B 0-9</span>{'\n'}
           <span className={ts.prompt}>$ </span>tail -f /var/log/syslog
         </div>
       </div>
@@ -80,7 +80,7 @@ const steps = [
       <div>
         <WindowTabs windows={['editor', 'bash']} active={1} />
         <div className={ts.output}>
-          <span style={{ color: '#666' }}># Ctrl+B & → konfirmasi "y" → window ditutup</span>{'\n'}
+          <span className="text-muted-foreground"># Ctrl+B & → konfirmasi "y" → window ditutup</span>{'\n'}
           <span className={ts.prompt}>$ </span>▊
         </div>
       </div>
