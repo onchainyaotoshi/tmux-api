@@ -206,20 +206,23 @@ npm run test:watch    # Watch mode
 ## Git Flow
 
 ```mermaid
-gitgraph
-    commit id: "v0.1.0"
-    branch develop
-    commit id: "feature work"
-    branch feature/new-feature
-    commit id: "feat: ..."
-    checkout develop
-    merge feature/new-feature
-    branch release/v0.2.0
-    commit id: "version bump"
-    checkout main
-    merge release/v0.2.0 tag: "v0.2.0"
-    checkout develop
-    merge release/v0.2.0
+graph LR
+    subgraph Branches
+        main["main<br/>(production)"]
+        develop["develop<br/>(integration)"]
+        feature["feature/*<br/>(new features)"]
+        release["release/*<br/>(release prep)"]
+        hotfix["hotfix/*<br/>(urgent fixes)"]
+    end
+
+    feature -->|merge| develop
+    develop -->|create| release
+    release -->|merge + tag| main
+    release -->|merge back| develop
+    hotfix -->|merge + tag| main
+    hotfix -->|merge back| develop
+    develop -->|branch| feature
+    main -->|branch| hotfix
 ```
 
 - **main** — production releases only
