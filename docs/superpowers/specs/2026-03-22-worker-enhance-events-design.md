@@ -27,21 +27,24 @@ POST /api/workers
 
 ### Spawn Flow (updated)
 
-1. Create tmux session `worker-{name}`
-2. If `cwd` provided: `sendKeys('cd /home/claude/projects/my-app')` + `sendKeys('Enter')`
-3. Brief delay to let `cd` complete
-4. `sendKeys('claude --model opus')` + `sendKeys('Enter')`
-5. Save to SQLite (including `cwd`)
+1. Create tmux session `worker-{name}` with optional `-c <cwd>` flag (tmux built-in working directory)
+2. `sendKeys('claude --model opus')` + `sendKeys('Enter')`
+3. Save to SQLite (including `cwd`)
+
+**Implementation:** `TmuxService.createSession(name, cwd?)` adds `-c <cwd>` arg to `tmux new-session`. This sets the working directory atomically — no race condition, no `cd` + delay hack. If `cwd` doesn't exist, tmux returns an error that gets caught.
 
 ### Schema Change
 
-Add `cwd` column to `workers` table:
+Add columns to `workers` table:
 
 | Column | Type | Notes |
 |---|---|---|
 | cwd | TEXT | Nullable, absolute path |
+| event_token | TEXT | UUID, generated on spawn, for events auth |
 
-Migration: `ALTER TABLE workers ADD COLUMN cwd TEXT`
+Migration: `ALTER TABLE workers ADD COLUMN cwd TEXT` + `ALTER TABLE workers ADD COLUMN event_token TEXT`
+
+**DatabaseService changes:** `createWorker()` must accept and store `cwd` and `event_token`. Add `createEvent()`, `getLastEvent(workerId)`, `listEvents(workerId, limit)` methods. `JSON.stringify()` on write, `JSON.parse()` on read for `data` field.
 
 ## 2. Events Endpoint
 
@@ -62,11 +65,19 @@ Response 201: { success: true, data: { id, worker_id, type, data, created_at } }
 Response 404: worker not found
 ```
 
-**Authentication:** Public endpoint (no API key required). Reason: Claude Code HTTP hooks cannot easily inject API keys. Scoped to valid worker IDs only — unknown IDs return 404.
+**Authentication:** Per-worker token. When a worker is spawned, Foreman generates a `event_token` (UUID) stored in the workers table. The events endpoint requires this token via query param or header:
+
+```
+POST /api/workers/:id/events?token=<event_token>
+```
+
+This token is injected as environment variable `FOREMAN_EVENT_TOKEN` in the tmux session, so hooks can reference it. Unknown IDs return 404, invalid token returns 403.
+
+**Threat model:** Localhost-only access (Docker binds 127.0.0.1). Token prevents accidental state manipulation from other processes. Not designed to resist a determined attacker with localhost access.
 
 **Validation:**
 - `type`: required string, minLength 1, maxLength 256
-- `data`: optional object (free-form JSON, stored as stringified text)
+- `data`: optional object (free-form JSON, max 8KB when stringified, stored as TEXT)
 
 ### Events SQLite Table
 
@@ -84,6 +95,18 @@ CREATE TABLE IF NOT EXISTS worker_events (
 
 When an event is received, Foreman updates the worker's status based on event type:
 
+**Hook event name normalization:** The route handler normalizes Claude Code's `hook_event_name` before storing:
+
+| Claude Code `hook_event_name` | Stored `type` |
+|---|---|
+| `Notification` | `notification` |
+| `Stop` | `stop` |
+| `StopFailure` | `stop_failure` |
+| `PreToolUse` | `tool_use` |
+| Any other / direct POST | stored as-is (lowercase) |
+
+**State mapping** — worker status updated from event type:
+
 | Event type | Worker status |
 |---|---|
 | `notification` | `waiting_input` |
@@ -92,7 +115,7 @@ When an event is received, Foreman updates the worker's status based on event ty
 | `tool_use` | `running` |
 | Any other type | No status change (event stored only) |
 
-The `waiting_input` status is new — added to the worker lifecycle.
+The `waiting_input` and `error` statuses are new — added to the worker lifecycle.
 
 ### Updated Worker Lifecycle
 
@@ -132,7 +155,9 @@ Response: {
 }
 ```
 
-`last_event` is the most recent event, or null if no events received.
+`last_event` is the most recent event, or null if no events received. Retrieved via `db.getLastEvent(workerId)` in `WorkerService.get()`.
+
+**Status enum update:** The `GET /api/workers?status=` query param must be updated to include `waiting_input` and `error` in the allowed enum values.
 
 ## 3. Claude Code Hooks Integration (Example)
 
@@ -146,28 +171,28 @@ Example `.claude/settings.local.json` in a project directory:
     "Notification": [{
       "hooks": [{
         "type": "http",
-        "url": "http://localhost:9993/api/workers/WORKER_ID/events",
+        "url": "http://localhost:9993/api/workers/WORKER_ID/events?token=EVENT_TOKEN",
         "timeout": 5
       }]
     }],
     "Stop": [{
       "hooks": [{
         "type": "http",
-        "url": "http://localhost:9993/api/workers/WORKER_ID/events",
+        "url": "http://localhost:9993/api/workers/WORKER_ID/events?token=EVENT_TOKEN",
         "timeout": 5
       }]
     }],
     "StopFailure": [{
       "hooks": [{
         "type": "http",
-        "url": "http://localhost:9993/api/workers/WORKER_ID/events",
+        "url": "http://localhost:9993/api/workers/WORKER_ID/events?token=EVENT_TOKEN",
         "timeout": 5
       }]
     }],
     "PreToolUse": [{
       "hooks": [{
         "type": "http",
-        "url": "http://localhost:9993/api/workers/WORKER_ID/events",
+        "url": "http://localhost:9993/api/workers/WORKER_ID/events?token=EVENT_TOKEN",
         "timeout": 5,
         "async": true
       }]
@@ -176,17 +201,23 @@ Example `.claude/settings.local.json` in a project directory:
 }
 ```
 
-**Note:** The hook HTTP POST body is constructed by Claude Code automatically — it includes `hook_event_name`, `session_id`, and event-specific fields. Foreman's events endpoint maps `hook_event_name` to event `type`.
+**Note:** The hook HTTP POST body is constructed by Claude Code automatically — it includes `hook_event_name`, `session_id`, and event-specific fields. Foreman's events route normalizes `hook_event_name` to lowercase event `type` before storing. `WORKER_ID` and `EVENT_TOKEN` should be replaced with actual values from the spawn response.
 
 ## 4. File Changes
 
 ```
-MODIFY: src/server/services/database.js    — add cwd column migration, worker_events table, event CRUD
-MODIFY: src/server/services/worker.js      — spawn with cwd, processEvent method
-CREATE: src/server/routes/events.js        — POST /api/workers/:id/events (public)
-MODIFY: src/server/routes/workers.js       — add cwd to spawn schema, add GET events listing
-MODIFY: src/server/index.js               — register events route (before auth plugin)
+MODIFY: src/server/services/tmux.js        — createSession accepts optional cwd param (-c flag)
+MODIFY: src/server/services/database.js    — add cwd + event_token columns, worker_events table, event CRUD methods
+MODIFY: src/server/services/worker.js      — spawn with cwd + event_token, processEvent method
+CREATE: src/server/routes/events.js        — POST + GET /api/workers/:id/events
+MODIFY: src/server/routes/workers.js       — add cwd to spawn schema, update status enum
+MODIFY: src/server/plugins/auth.js         — skip auth for POST /api/workers/:id/events (token-based auth handled in route)
+MODIFY: src/server/index.js               — register events route
 ```
+
+**Auth bypass for events:** The auth plugin (`plugins/auth.js`) must skip API key/Bearer checks for `POST /api/workers/:id/events`. The events route handles its own auth via per-worker `event_token` query param.
+
+**Event retention:** No automatic cleanup in this phase. Noted as future concern — for long-running workers with frequent tool_use events, consider max 1000 events per worker or TTL-based cleanup.
 
 ## 5. What This Spec Does NOT Cover
 
