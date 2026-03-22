@@ -1,6 +1,5 @@
-import { Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { TerminalSquare, Eye, Wifi } from 'lucide-react'
-import { auth } from '../lib/auth.js'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
@@ -18,20 +17,16 @@ const features = [
   {
     icon: Wifi,
     title: 'API',
-    description: 'Full REST API with Swagger docs. Integrate Foreman into your automation pipeline.',
+    description: 'Full REST API with Swagger docs. Integrate tmux-api into your automation pipeline.',
   },
 ]
 
 export default function HomePage() {
-  if (auth.isAuthenticated()) {
-    return <Navigate to="/sessions" replace />
-  }
-
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <TerminalSquare className="mb-4 size-10 text-primary" />
       <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-        Orchestrate your AI workforce
+        tmux-api
       </h1>
       <p className="mt-3 max-w-md text-muted-foreground">
         Manage tmux sessions via REST API. Persistent terminal sessions controlled over HTTP.
@@ -40,9 +35,11 @@ export default function HomePage() {
       <Button
         size="lg"
         className="mt-8"
-        onClick={() => auth.login()}
+        asChild
       >
-        Get Started
+        <a href="/docs" target="_blank" rel="noopener noreferrer">
+          API Docs
+        </a>
       </Button>
 
       <div className="mt-16 grid w-full max-w-3xl gap-4 text-left sm:grid-cols-3">

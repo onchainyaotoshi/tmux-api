@@ -1,15 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-  MonitorPlay,
-  Bot,
-  BookOpen,
-  FileText,
-  LogOut,
-  LogIn,
-  Menu,
-} from 'lucide-react'
-import { auth } from '../lib/auth.js'
+import { BookOpen, FileText, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -17,15 +8,10 @@ import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 const navItems = [
-  { to: '/sessions', label: 'Sessions', icon: MonitorPlay },
-  { to: '/agents', label: 'Agents', icon: Bot },
   { to: '/about-tmux', label: 'About Tmux', icon: BookOpen },
 ]
 
 function SidebarNav({ onNavigate }) {
-  const isLoggedIn = auth.isAuthenticated()
-  const user = isLoggedIn ? auth.getUser() : null
-
   const linkClass = ({ isActive }) =>
     cn(
       'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
@@ -39,7 +25,7 @@ function SidebarNav({ onNavigate }) {
     <div className="flex h-full flex-col bg-sidebar-background border-r border-sidebar-border">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-5">
-        <span className="text-lg font-semibold text-foreground">Foreman</span>
+        <span className="text-lg font-semibold text-foreground">tmux-api</span>
       </div>
       <Separator className="bg-sidebar-border" />
 
@@ -66,36 +52,6 @@ function SidebarNav({ onNavigate }) {
           <span className="ml-auto text-xs text-muted-foreground">↗</span>
         </a>
       </nav>
-
-      {/* Auth area */}
-      <div className="border-t border-sidebar-border p-3">
-        {user && (
-          <p className="mb-2 truncate text-xs text-muted-foreground">
-            {user.email || 'Logged in'}
-          </p>
-        )}
-        {isLoggedIn ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
-            onClick={() => auth.logout()}
-          >
-            <LogOut className="size-4 mr-2" />
-            Logout
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
-            onClick={() => auth.login()}
-          >
-            <LogIn className="size-4 mr-2" />
-            Login
-          </Button>
-        )}
-      </div>
     </div>
   )
 }
@@ -113,7 +69,7 @@ export default function Sidebar() {
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <span className="ml-2 text-sm font-semibold">Foreman</span>
+          <span className="ml-2 text-sm font-semibold">tmux-api</span>
         </div>
         <SheetContent side="left" className="w-60 p-0 bg-sidebar-background border-sidebar-border">
           <SidebarNav onNavigate={() => setSheetOpen(false)} />
