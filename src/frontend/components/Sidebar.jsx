@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { BookOpen, FileText, Menu } from 'lucide-react'
+import { BookOpen, FileText, Github, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -52,6 +52,24 @@ function SidebarNav({ onNavigate }) {
           <span className="ml-auto text-xs text-muted-foreground">↗</span>
         </a>
       </nav>
+
+      {/* Footer */}
+      <div className="p-3 border-t border-sidebar-border">
+        <a
+          href="https://github.com/onchainyaotoshi/tmux-api"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+            'hover:bg-accent hover:text-accent-foreground',
+            'text-muted-foreground'
+          )}
+        >
+          <Github className="size-4 shrink-0" />
+          <span>GitHub</span>
+          <span className="ml-auto text-xs text-muted-foreground">↗</span>
+        </a>
+      </div>
     </div>
   )
 }
