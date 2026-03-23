@@ -8,7 +8,7 @@ const ALLOWED_SUBCOMMANDS = [
   'list-sessions', 'new-session', 'kill-session', 'rename-session',
   'list-windows', 'new-window', 'kill-window', 'rename-window',
   'list-panes', 'split-window', 'kill-pane', 'resize-pane',
-  'send-keys', 'capture-pane', 'has-session',
+  'send-keys', 'capture-pane', 'has-session', 'set-environment',
 ]
 
 export class TerminalService {
@@ -137,6 +137,10 @@ export class TerminalService {
   // Control
   async sendKeys(session, window, pane, keys) {
     await this.execute('send-keys', ['-t', `${session}:${window}.${pane}`, keys])
+  }
+
+  async setEnvironment(name, key, value) {
+    await this.execute('set-environment', ['-t', name, key, value])
   }
 
   async capturePane(session, window, pane) {

@@ -81,6 +81,48 @@ export async function terminalRoutes(fastify) {
     return { success: true, data: { name: request.body.newName } }
   })
 
+  fastify.post('/terminals/:terminal/set-environment', {
+    schema: {
+      tags: ['L1 — Terminal'],
+      summary: 'Set environment variable on terminal session',
+      params: {
+        type: 'object',
+        properties: {
+          terminal: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$' },
+        },
+      },
+      body: {
+        type: 'object',
+        required: ['key', 'value'],
+        properties: {
+          key: { type: 'string', minLength: 1, maxLength: 256, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' },
+          value: { type: 'string', maxLength: 4096 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                terminal: { type: 'string' },
+                key: { type: 'string' },
+                set: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+    },
+  }, async (request) => {
+    const { terminal: terminalName } = request.params
+    const { key, value } = request.body
+    await terminal.setEnvironment(terminalName, key, value)
+    return { success: true, data: { terminal: terminalName, key, set: true } }
+  })
+
   fastify.delete('/terminals/:terminal', {
     schema: {
       tags: ['Terminals'],

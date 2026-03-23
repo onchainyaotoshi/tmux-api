@@ -11,6 +11,7 @@ async function cleanup() {
   try { await terminal.killSession('cwd-test') } catch {}
   try { await terminal.killSession('cwd-bad') } catch {}
   try { await terminal.killSession('cwd-none') } catch {}
+  try { await terminal.killSession('env-test') } catch {}
 }
 
 describe('TerminalService', () => {
@@ -151,6 +152,22 @@ describe('TerminalService', () => {
     it('should return false for non-existing session', async () => {
       const result = await terminal.hasSession('nonexistent-session-xyz')
       expect(result).toBe(false)
+    })
+  })
+
+  describe('setEnvironment', () => {
+    it('should set environment variable', async () => {
+      // Create a session first
+      await terminal.createSession('env-test')
+      await terminal.setEnvironment('env-test', 'MY_VAR', 'hello')
+      // tmux set-environment sets the session env (used by new panes/windows),
+      // so verify via tmux show-environment by using send-keys
+      await terminal.sendKeys('env-test', '0', '0', 'tmux show-environment -t env-test MY_VAR')
+      await terminal.sendKeys('env-test', '0', '0', 'Enter')
+      await new Promise(r => setTimeout(r, 500))
+      const output = await terminal.capturePane('env-test', '0', '0')
+      expect(output).toContain('MY_VAR=hello')
+      await terminal.killSession('env-test')
     })
   })
 
