@@ -60,29 +60,6 @@ Server runs at `http://127.0.0.1:9993` (localhost only). Port is configurable vi
 cloudflared tunnel --url http://localhost:9993
 ```
 
-## Node.js SDK
-
-Install the official SDK:
-
-```bash
-npm install @yaotoshi/tmux-api
-```
-
-```js
-import TmuxApi from '@yaotoshi/tmux-api'
-
-const client = new TmuxApi({
-  baseUrl: 'http://localhost:9993',
-  apiKey: 'your-api-key',
-})
-
-await client.sessions.create({ name: 'worker-1', command: 'claude --chat' })
-await client.terminals.panes.sendKeys('worker-1', '0', '0', { keys: 'hello' })
-const output = await client.terminals.panes.capture('worker-1', '0', '0')
-```
-
-See full SDK docs: [`@yaotoshi/tmux-api` on npm](https://www.npmjs.com/package/@yaotoshi/tmux-api)
-
 ## Usage Examples (curl)
 
 ```bash
