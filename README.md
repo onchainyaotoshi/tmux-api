@@ -6,20 +6,9 @@ Self-hosted REST API server for controlling tmux remotely. Deploy the server on 
 
 ## Quick Start
 
-### Docker (recommended)
-
-Prerequisites: Docker, tmux on host (`apt install tmux` / `apk add tmux`)
-
-```bash
-cp .env.example .env   # edit API_KEY
-docker compose up -d
-```
-
-> **How it works:** The Docker container only runs the tmux-api server. tmux sessions run on the **host**, not inside the container. The container connects to the host's tmux server via the Unix socket mounted at `/tmp`. This means any tools you need in tmux sessions (Claude Code, git, etc.) should be installed on the host, not in the container.
-
 ### Local (Production)
 
-Recommended for running on a server with auto-restart on boot:
+Prerequisites: Node.js 20+, tmux (`apt install tmux`)
 
 ```bash
 git clone https://github.com/onchainyaotoshi/tmux-api.git
@@ -38,7 +27,7 @@ sudo ./uninstall.sh                 # remove service
 
 ### Local (Development)
 
-Prerequisites: Node.js 20+, tmux (`apt install tmux` / `apk add tmux`)
+Prerequisites: Node.js 20+, tmux (`apt install tmux`)
 
 ```bash
 git clone https://github.com/onchainyaotoshi/tmux-api.git
@@ -53,6 +42,15 @@ npm start
 # Or dev mode (auto-reload)
 npm run dev:server
 ```
+
+### Docker
+
+```bash
+cp .env.example .env   # edit API_KEY
+docker compose up -d
+```
+
+> **How it works:** The Docker container only runs the tmux-api server. tmux sessions run on the **host**, not inside the container. The container connects to the host's tmux server via the Unix socket mounted at `/tmp`. This means any tools you need in tmux sessions (Claude Code, git, etc.) should be installed on the host, not in the container.
 
 Server runs at `http://127.0.0.1:9993` (localhost only). Port is configurable via `PORT` in `.env`.
 
