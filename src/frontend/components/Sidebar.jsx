@@ -1,15 +1,13 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { BookOpen, FileText, Github, Menu } from 'lucide-react'
+import { FileText, Github, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 
-const navItems = [
-  { to: '/about-tmux', label: 'About Tmux', icon: BookOpen },
-]
+const navItems = []
 
 function SidebarNav({ onNavigate }) {
   const linkClass = ({ isActive }) =>
