@@ -82,7 +82,7 @@ npm run test:watch    # Watch mode
 - **Name validation** — Session/window names must match `^[a-zA-Z0-9_-]+$` (enforced at route schema level) to prevent tmux target syntax injection.
 - **send-keys maxLength** — Limited to 4096 chars to prevent resource exhaustion.
 - **Dual auth** — `/api/*` routes accept either `X-API-Key` header or `Authorization: Bearer <token>`. API key is checked first (no network call). Bearer token is validated against the accounts service `GET /api/proxy/me`.
-- **Localhost only** — Docker binds `127.0.0.1`. Use cloudflared for external access.
+- **Localhost only** — All services MUST bind to `127.0.0.1`, NEVER `0.0.0.0`. Docker binds `127.0.0.1:9993:9993`. Public access goes through cloudflared tunnel. Binding `0.0.0.0` bypasses all auth and exposes the service to the internet.
 
 ### Patterns
 - **Route schemas** — Every route has JSON Schema for request validation AND OpenAPI auto-generation. If you add a route, always include schema.

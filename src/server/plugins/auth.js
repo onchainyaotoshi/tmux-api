@@ -1,4 +1,5 @@
 import fp from 'fastify-plugin'
+import { timingSafeEqual } from 'node:crypto'
 
 async function auth(fastify, opts) {
   const apiKey = opts.apiKey
@@ -7,9 +8,13 @@ async function auth(fastify, opts) {
   fastify.addHook('onRequest', async (request, reply) => {
     if (!request.url.startsWith('/api/')) return
 
-    // Try API key first
+    // Try API key first (timing-safe comparison)
     const providedKey = request.headers['x-api-key']
-    if (providedKey && providedKey === apiKey) return
+    if (providedKey && typeof providedKey === 'string' && providedKey.length === apiKey.length) {
+      const a = Buffer.from(providedKey)
+      const b = Buffer.from(apiKey)
+      if (timingSafeEqual(a, b)) return
+    }
 
     // Try Bearer token
     const authHeader = request.headers.authorization

@@ -3,14 +3,14 @@ export async function windowRoutes(fastify) {
 
   const terminalParam = {
     type: 'object',
-    properties: { terminal: { type: 'string' } },
+    properties: { terminal: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$' } },
   }
 
   const terminalWindowParams = {
     type: 'object',
     properties: {
-      terminal: { type: 'string' },
-      index: { type: 'string' },
+      terminal: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$' },
+      index: { type: 'string', pattern: '^\\d+$' },
     },
   }
 

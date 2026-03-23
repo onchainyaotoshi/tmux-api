@@ -83,7 +83,7 @@ if (frontendEnabled && existsSync(distPath)) {
 
 // Start server
 try {
-  await app.listen({ port: PORT, host: '0.0.0.0' })
+  await app.listen({ port: PORT, host: process.env.HOST || '127.0.0.1' })
   console.log(`tmux-api running on port ${PORT}`)
   if (SWAGGER_ENABLED) {
     console.log(`Swagger UI: http://localhost:${PORT}/docs`)

@@ -66,7 +66,7 @@ export async function terminalRoutes(fastify) {
       summary: 'Rename a terminal',
       params: {
         type: 'object',
-        properties: { terminal: { type: 'string' } },
+        properties: { terminal: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$' } },
       },
       body: {
         type: 'object',
@@ -129,7 +129,7 @@ export async function terminalRoutes(fastify) {
       summary: 'Kill a terminal',
       params: {
         type: 'object',
-        properties: { terminal: { type: 'string' } },
+        properties: { terminal: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$' } },
       },
     },
   }, async (request) => {
