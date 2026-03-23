@@ -81,7 +81,7 @@ npm run test:watch    # Watch mode
 - **ALLOWED_SUBCOMMANDS whitelist** — Only 14 tmux subcommands are permitted.
 - **Name validation** — Session/window names must match `^[a-zA-Z0-9_-]+$` (enforced at route schema level) to prevent tmux target syntax injection.
 - **send-keys maxLength** — Limited to 4096 chars to prevent resource exhaustion.
-- **Dual auth** — `/api/*` routes accept either `X-API-Key` header or `Authorization: Bearer <token>`. API key is checked first (no network call). Bearer token is validated against the accounts service `GET /api/proxy/me`.
+- **Dual auth (Bearer is optional)** — `/api/*` routes accept either `X-API-Key` header or `Authorization: Bearer <token>`. API key is checked first (no network call). Bearer token is validated against the accounts service `GET /api/proxy/me`. **If `AUTH_ACCOUNTS_URL` is not set, Bearer auth is disabled entirely and only API key auth is available.** No external dependencies required for API-key-only deployments.
 - **Localhost only** — All services MUST bind to `127.0.0.1`, NEVER `0.0.0.0`. Docker binds `127.0.0.1:9993:9993`. Public access goes through cloudflared tunnel. Binding `0.0.0.0` bypasses all auth and exposes the service to the internet.
 
 ### Patterns
@@ -107,7 +107,7 @@ API_KEY=<required>                  # API key for external client auth
 PORT=9993                           # Server port (default: 9993)
 SWAGGER_ENABLED=true                # Set to "false" to disable Scalar API docs
 FRONTEND_ENABLED=true               # Set to "false" to disable serving frontend SPA
-AUTH_ACCOUNTS_URL=<accounts URL>    # Accounts service URL for Bearer token validation
+AUTH_ACCOUNTS_URL=                      # (Optional) Accounts service URL for Bearer token validation. Leave empty to use API key auth only — no external dependencies needed.
 ```
 
 See `.env.example` for full documentation.
