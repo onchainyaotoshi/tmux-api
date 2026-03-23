@@ -106,47 +106,11 @@ curl -s $API/api/sessions/worker-1/windows/0/panes/0/capture \
   -H "X-API-Key: $KEY" | jq .data.content
 ```
 
-## API Endpoints
+## API Reference
 
-### Authentication
+Full API endpoints and SDK documentation: [`@yaotoshi/tmux-api` on npm](https://www.npmjs.com/package/@yaotoshi/tmux-api)
 
-All `/api/*` endpoints require the header:
-```
-X-API-Key: your-api-key
-```
-
-### Sessions
-
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| GET | `/api/sessions` | - | List sessions |
-| POST | `/api/sessions` | `{name}` | Create session |
-| PUT | `/api/sessions/:name` | `{newName}` | Rename session |
-| DELETE | `/api/sessions/:name` | - | Kill session |
-
-### Windows
-
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| GET | `/api/sessions/:s/windows` | - | List windows |
-| POST | `/api/sessions/:s/windows` | `{name?}` | Create window |
-| PUT | `/api/sessions/:s/windows/:i` | `{newName}` | Rename window |
-| DELETE | `/api/sessions/:s/windows/:i` | - | Kill window |
-
-### Panes
-
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| GET | `.../:w/panes` | - | List panes |
-| POST | `.../:w/panes` | `{direction: "h"\|"v"}` | Split pane |
-| PUT | `.../:w/panes/:p/resize` | `{direction: "U"\|"D"\|"L"\|"R", amount}` | Resize |
-| DELETE | `.../:w/panes/:p` | - | Kill pane |
-| POST | `.../:w/panes/:p/send-keys` | `{keys}` | Send keys |
-| GET | `.../:w/panes/:p/capture` | - | Capture output |
-
-### API Docs
-
-Open `http://localhost:9993/docs` for interactive API documentation (Scalar).
+Interactive API docs available at `http://localhost:9993/docs` (Scalar) after starting the server.
 
 ## Use Cases
 
