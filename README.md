@@ -264,6 +264,14 @@ tmux-api/
 └── package.json
 ```
 
+## Use Cases
+
+Projects using tmux-api in production:
+
+- **[foreman](https://github.com/onchainyaotoshi/foreman)** — AI agent orchestrator that uses tmux-api as its backend for managing multiple AI agent sessions (blueprints, lifecycle, monitoring). Each agent runs in its own tmux session, controlled entirely via tmux-api endpoints.
+
+If you're using tmux-api in your project, feel free to open a PR to add it here!
+
 ## Development
 
 ```bash
