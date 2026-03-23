@@ -14,6 +14,7 @@ const terminalService = new TerminalService()
 async function cleanup() {
   try { await terminalService.killSession(TEST_SESSION) } catch {}
   try { await terminalService.killSession('renamed-session') } catch {}
+  try { await terminalService.killSession('env-route-test') } catch {}
 }
 
 beforeAll(async () => {
@@ -67,6 +68,32 @@ describe('PUT /api/terminals/:terminal', () => {
     })
     expect(res.statusCode).toBe(200)
     expect(res.json().success).toBe(true)
+  })
+})
+
+describe('POST /api/terminals/:terminal/set-environment', () => {
+  it('POST /api/terminals/:terminal/set-environment should set env var', async () => {
+    // Create session first
+    await app.inject({
+      method: 'POST', url: '/api/terminals',
+      headers, payload: { name: 'env-route-test' },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/terminals/env-route-test/set-environment',
+      headers,
+      payload: { key: 'TEST_VAR', value: 'test_value' },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.success).toBe(true)
+    expect(body.data.set).toBe(true)
+
+    // Cleanup
+    await app.inject({
+      method: 'DELETE', url: '/api/terminals/env-route-test', headers,
+    })
   })
 })
 

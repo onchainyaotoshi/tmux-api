@@ -58,6 +58,7 @@ await client.sessions.create({
 | `.create({ name })` | Create a terminal |
 | `.update(name, { newName })` | Rename a terminal |
 | `.delete(name)` | Kill a terminal |
+| `.setEnvironment(terminal, { key, value })` | Set environment variable (not visible in pane) |
 
 ### Windows — `client.terminals.windows`
 

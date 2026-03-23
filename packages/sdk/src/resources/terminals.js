@@ -20,6 +20,10 @@ export class Terminals {
   delete(name) {
     return this.client.delete(`/api/terminals/${name}`)
   }
+
+  setEnvironment(terminal, body) {
+    return this.client.post(`/api/terminals/${terminal}/set-environment`, body)
+  }
 }
 
 export class Windows {
