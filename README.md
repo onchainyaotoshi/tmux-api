@@ -99,7 +99,26 @@ graph TB
 - Node.js 20+
 - tmux installed (`apt install tmux` / `apk add tmux`)
 
-### Local
+### Local (Production)
+
+Recommended for running on a server with auto-restart on boot:
+
+```bash
+git clone https://github.com/onchainyaotoshi/tmux-api.git
+cd tmux-api
+sudo ./install.sh
+```
+
+This installs dependencies, builds the frontend, creates a systemd service, and starts tmux-api. Edit `.env` to set your `API_KEY` before or after install.
+
+```bash
+sudo systemctl status tmux-api      # check status
+sudo systemctl restart tmux-api     # restart
+journalctl -u tmux-api -f           # follow logs
+sudo ./uninstall.sh                 # remove service
+```
+
+### Local (Development)
 
 ```bash
 git clone https://github.com/onchainyaotoshi/tmux-api.git
