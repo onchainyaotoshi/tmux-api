@@ -4,94 +4,6 @@
 
 Stateless REST API server for controlling tmux remotely. Deploy the server, hit endpoints from any language or tool.
 
-## Architecture
-
-```mermaid
-graph TB
-    Client["Client (curl, SDK, Agent)"] -->|HTTP + X-API-Key| Server
-
-    subgraph Server["tmux-api Server :9993"]
-        direction TB
-        Auth["Auth Plugin<br/>API Key validation"]
-        Swagger["Scalar API Docs<br/>/docs"]
-        RateLimit["Rate Limiter<br/>100 req/min"]
-
-        subgraph Routes["API Routes /api/*"]
-            Sessions["Sessions<br/>CRUD"]
-            Windows["Windows<br/>CRUD"]
-            Panes["Panes<br/>CRUD + Control"]
-        end
-
-        Service["TerminalService<br/>execFile wrapper"]
-        Static["Static Frontend<br/>Tutorial + Docs"]
-    end
-
-    Service -->|execFile| Tmux["tmux binary"]
-    Tmux --> Terminal1["Session 1"]
-    Tmux --> Terminal2["Session 2"]
-    Tmux --> Terminal3["Session N<br/>..."]
-
-    Auth --> Routes
-    RateLimit --> Routes
-    Routes --> Service
-```
-
-## API Flow
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant F as tmux-api
-    participant T as tmux
-
-    C->>F: POST /api/sessions {name: "worker-1"}
-    F->>F: Validate API Key
-    F->>T: tmux new-session -d -s worker-1
-    T-->>F: OK
-    F-->>C: 201 {success: true, data: {name: "worker-1"}}
-
-    C->>F: POST /api/.../panes/0/send-keys {keys: "claude --chat"}
-    F->>T: tmux send-keys -t worker-1:0.0 "claude --chat"
-    T-->>F: OK
-    F-->>C: 200 {success: true}
-
-    C->>F: GET /api/.../panes/0/capture
-    F->>T: tmux capture-pane -t worker-1:0.0 -p
-    T-->>F: pane content
-    F-->>C: 200 {success: true, data: {content: "..."}}
-```
-
-## How It Works (Docker)
-
-```mermaid
-graph TB
-    subgraph Host["Host Machine"]
-        HostTmux["tmux ls → sees all sessions"]
-        TmpHost["/tmp/tmux-1000/default<br/>(tmux socket)"]
-
-        subgraph Container["Docker Container (node:20-alpine + tmux)"]
-            Fastify["Fastify :9993<br/>WORKDIR /app"]
-            TS["TerminalService"]
-            TmuxBin["tmux binary<br/>(apk add tmux)"]
-            TmpContainer["/tmp/tmux-1000/default"]
-
-            Fastify -->|"POST /api/sessions {name, cwd?}"| TS
-            TS -->|"execFile('tmux', ['new-session', ...])"| TmuxBin
-            TmuxBin --> TmpContainer
-        end
-
-        TmpContainer <-->|"volume mount<br/>/tmp:/tmp"| TmpHost
-        TmpHost --- HostTmux
-    end
-
-    Client["Client (SDK, curl)"] -->|"HTTP + X-API-Key"| Fastify
-```
-
-**Key points:**
-- tmux runs **inside the container** (installed via `apk add tmux`)
-- `/tmp:/tmp` volume mount shares the tmux socket — sessions created via API are visible on the host (`tmux ls`) and vice versa
-- Default working directory for new sessions is `/app` (container's WORKDIR). Pass `cwd` in the request body to override
-
 ## Quick Start
 
 ### Docker (recommended)
@@ -150,48 +62,6 @@ Server runs at `http://127.0.0.1:9993` (localhost only). Port is configurable vi
 cloudflared tunnel --url http://localhost:9993
 ```
 
-## API Endpoints
-
-### Authentication
-
-All `/api/*` endpoints require the header:
-```
-X-API-Key: your-api-key
-```
-
-### Sessions
-
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| GET | `/api/sessions` | - | List sessions |
-| POST | `/api/sessions` | `{name}` | Create session |
-| PUT | `/api/sessions/:name` | `{newName}` | Rename session |
-| DELETE | `/api/sessions/:name` | - | Kill session |
-
-### Windows
-
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| GET | `/api/sessions/:s/windows` | - | List windows |
-| POST | `/api/sessions/:s/windows` | `{name?}` | Create window |
-| PUT | `/api/sessions/:s/windows/:i` | `{newName}` | Rename window |
-| DELETE | `/api/sessions/:s/windows/:i` | - | Kill window |
-
-### Panes
-
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| GET | `.../:w/panes` | - | List panes |
-| POST | `.../:w/panes` | `{direction: "h"\|"v"}` | Split pane |
-| PUT | `.../:w/panes/:p/resize` | `{direction: "U"\|"D"\|"L"\|"R", amount}` | Resize |
-| DELETE | `.../:w/panes/:p` | - | Kill pane |
-| POST | `.../:w/panes/:p/send-keys` | `{keys}` | Send keys |
-| GET | `.../:w/panes/:p/capture` | - | Capture output |
-
-### API Docs
-
-Open `http://localhost:9993/docs` for interactive API documentation (Scalar).
-
 ## Node.js SDK
 
 Install the official SDK:
@@ -238,6 +108,154 @@ curl -s $API/api/sessions/worker-1/windows/0/panes/0/capture \
   -H "X-API-Key: $KEY" | jq .data.content
 ```
 
+## API Endpoints
+
+### Authentication
+
+All `/api/*` endpoints require the header:
+```
+X-API-Key: your-api-key
+```
+
+### Sessions
+
+| Method | Endpoint | Body | Description |
+|--------|----------|------|-------------|
+| GET | `/api/sessions` | - | List sessions |
+| POST | `/api/sessions` | `{name}` | Create session |
+| PUT | `/api/sessions/:name` | `{newName}` | Rename session |
+| DELETE | `/api/sessions/:name` | - | Kill session |
+
+### Windows
+
+| Method | Endpoint | Body | Description |
+|--------|----------|------|-------------|
+| GET | `/api/sessions/:s/windows` | - | List windows |
+| POST | `/api/sessions/:s/windows` | `{name?}` | Create window |
+| PUT | `/api/sessions/:s/windows/:i` | `{newName}` | Rename window |
+| DELETE | `/api/sessions/:s/windows/:i` | - | Kill window |
+
+### Panes
+
+| Method | Endpoint | Body | Description |
+|--------|----------|------|-------------|
+| GET | `.../:w/panes` | - | List panes |
+| POST | `.../:w/panes` | `{direction: "h"\|"v"}` | Split pane |
+| PUT | `.../:w/panes/:p/resize` | `{direction: "U"\|"D"\|"L"\|"R", amount}` | Resize |
+| DELETE | `.../:w/panes/:p` | - | Kill pane |
+| POST | `.../:w/panes/:p/send-keys` | `{keys}` | Send keys |
+| GET | `.../:w/panes/:p/capture` | - | Capture output |
+
+### API Docs
+
+Open `http://localhost:9993/docs` for interactive API documentation (Scalar).
+
+## Use Cases
+
+Projects using tmux-api in production:
+
+- **[foreman](https://github.com/onchainyaotoshi/foreman)** — AI agent orchestrator that uses tmux-api as its backend for managing multiple AI agent sessions (blueprints, lifecycle, monitoring). Each agent runs in its own tmux session, controlled entirely via tmux-api endpoints.
+
+If you're using tmux-api in your project, feel free to open a PR to add it here!
+
+## Development
+
+```bash
+npm run dev:server    # Server with auto-reload
+npm run dev:frontend  # Vite dev server (frontend only)
+npm run build         # Build frontend
+npm test              # Run tests
+npm run test:watch    # Watch mode
+```
+
+## Architecture
+
+```mermaid
+graph TB
+    Client["Client (curl, SDK, Agent)"] -->|HTTP + X-API-Key| Server
+
+    subgraph Server["tmux-api Server :9993"]
+        direction TB
+        Auth["Auth Plugin<br/>API Key validation"]
+        Swagger["Scalar API Docs<br/>/docs"]
+        RateLimit["Rate Limiter<br/>100 req/min"]
+
+        subgraph Routes["API Routes /api/*"]
+            Sessions["Sessions<br/>CRUD"]
+            Windows["Windows<br/>CRUD"]
+            Panes["Panes<br/>CRUD + Control"]
+        end
+
+        Service["TerminalService<br/>execFile wrapper"]
+        Static["Static Frontend<br/>Tutorial + Docs"]
+    end
+
+    Service -->|execFile| Tmux["tmux binary"]
+    Tmux --> Terminal1["Session 1"]
+    Tmux --> Terminal2["Session 2"]
+    Tmux --> Terminal3["Session N<br/>..."]
+
+    Auth --> Routes
+    RateLimit --> Routes
+    Routes --> Service
+```
+
+### API Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant F as tmux-api
+    participant T as tmux
+
+    C->>F: POST /api/sessions {name: "worker-1"}
+    F->>F: Validate API Key
+    F->>T: tmux new-session -d -s worker-1
+    T-->>F: OK
+    F-->>C: 201 {success: true, data: {name: "worker-1"}}
+
+    C->>F: POST /api/.../panes/0/send-keys {keys: "claude --chat"}
+    F->>T: tmux send-keys -t worker-1:0.0 "claude --chat"
+    T-->>F: OK
+    F-->>C: 200 {success: true}
+
+    C->>F: GET /api/.../panes/0/capture
+    F->>T: tmux capture-pane -t worker-1:0.0 -p
+    T-->>F: pane content
+    F-->>C: 200 {success: true, data: {content: "..."}}
+```
+
+### How It Works (Docker)
+
+```mermaid
+graph TB
+    subgraph Host["Host Machine"]
+        HostTmux["tmux ls → sees all sessions"]
+        TmpHost["/tmp/tmux-1000/default<br/>(tmux socket)"]
+
+        subgraph Container["Docker Container (node:20-alpine + tmux)"]
+            Fastify["Fastify :9993<br/>WORKDIR /app"]
+            TS["TerminalService"]
+            TmuxBin["tmux binary<br/>(apk add tmux)"]
+            TmpContainer["/tmp/tmux-1000/default"]
+
+            Fastify -->|"POST /api/sessions {name, cwd?}"| TS
+            TS -->|"execFile('tmux', ['new-session', ...])"| TmuxBin
+            TmuxBin --> TmpContainer
+        end
+
+        TmpContainer <-->|"volume mount<br/>/tmp:/tmp"| TmpHost
+        TmpHost --- HostTmux
+    end
+
+    Client["Client (SDK, curl)"] -->|"HTTP + X-API-Key"| Fastify
+```
+
+**Key points:**
+- tmux runs **inside the container** (installed via `apk add tmux`)
+- `/tmp:/tmp` volume mount shares the tmux socket — sessions created via API are visible on the host (`tmux ls`) and vice versa
+- Default working directory for new sessions is `/app` (container's WORKDIR). Pass `cwd` in the request body to override
+
 ## Project Structure
 
 ```
@@ -263,24 +281,6 @@ tmux-api/
 ├── Dockerfile
 ├── docker-compose.yml
 └── package.json
-```
-
-## Use Cases
-
-Projects using tmux-api in production:
-
-- **[foreman](https://github.com/onchainyaotoshi/foreman)** — AI agent orchestrator that uses tmux-api as its backend for managing multiple AI agent sessions (blueprints, lifecycle, monitoring). Each agent runs in its own tmux session, controlled entirely via tmux-api endpoints.
-
-If you're using tmux-api in your project, feel free to open a PR to add it here!
-
-## Development
-
-```bash
-npm run dev:server    # Server with auto-reload
-npm run dev:frontend  # Vite dev server (frontend only)
-npm run build         # Build frontend
-npm test              # Run tests
-npm run test:watch    # Watch mode
 ```
 
 ## License
