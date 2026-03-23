@@ -89,6 +89,10 @@ Full API endpoints and SDK documentation: [`@yaotoshi/tmux-api` on npm](https://
 
 Interactive API docs available at `http://localhost:9993/docs` (Scalar) after starting the server.
 
+## Learn tmux
+
+New to tmux? Check out the **[Tmux Tutorial](https://tmux-tutorial-5ww.pages.dev/)** — an interactive visual guide covering sessions, windows, panes, navigation, resize, and copy mode.
+
 ## Use Cases
 
 Projects using tmux-api in production:
