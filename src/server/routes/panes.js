@@ -4,17 +4,17 @@ export async function paneRoutes(fastify) {
   const paneParams = {
     type: 'object',
     properties: {
-      terminal: { type: 'string' },
-      window: { type: 'string' },
+      terminal: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$' },
+      window: { type: 'string', pattern: '^\\d+$' },
     },
   }
 
   const paneIndexParams = {
     type: 'object',
     properties: {
-      terminal: { type: 'string' },
-      window: { type: 'string' },
-      index: { type: 'string' },
+      terminal: { type: 'string', pattern: '^[a-zA-Z0-9_-]+$' },
+      window: { type: 'string', pattern: '^\\d+$' },
+      index: { type: 'string', pattern: '^\\d+$' },
     },
   }
 
