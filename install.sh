@@ -45,17 +45,20 @@ info "Node.js $(node -v)"
 info "npm $(npm -v)"
 info "tmux $(tmux -V)"
 
-# --- Install dependencies ---
+# --- Install dependencies + build ---
 echo ""
 echo "Installing dependencies..."
 cd "$INSTALL_DIR"
-sudo -u "$RUN_USER" "$NPM_BIN" ci --omit=dev --ignore-scripts 2>&1 | tail -1
+sudo -u "$RUN_USER" "$NPM_BIN" ci 2>&1 | tail -1
 info "Dependencies installed"
 
-# --- Build frontend ---
 echo "Building frontend..."
-sudo -u "$RUN_USER" "$NPM_BIN" run build 2>&1 | tail -1
+sudo -u "$RUN_USER" "$NPM_BIN" run build 2>&1 | tail -3
 info "Frontend built"
+
+echo "Removing dev dependencies..."
+sudo -u "$RUN_USER" "$NPM_BIN" prune --omit=dev 2>&1 | tail -1
+info "Dev dependencies removed"
 
 # --- Setup .env ---
 if [[ ! -f "$INSTALL_DIR/.env" ]]; then
