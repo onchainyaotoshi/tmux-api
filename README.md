@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@yaotoshi/tmux-api)](https://www.npmjs.com/package/@yaotoshi/tmux-api)
 
-Stateless REST API server for controlling tmux remotely. Deploy the server, hit endpoints from any language or tool.
+Self-hosted REST API server for controlling tmux remotely. Deploy the server on your machine, then use the [`@yaotoshi/tmux-api`](https://www.npmjs.com/package/@yaotoshi/tmux-api) SDK (or any HTTP client) to manage tmux sessions via API. The server runs on your infrastructure — the SDK connects to it via `baseUrl`.
 
 ## Quick Start
 
