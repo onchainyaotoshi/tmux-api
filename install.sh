@@ -6,8 +6,6 @@ SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN_USER="${SUDO_USER:-$USER}"
 RUN_GROUP="$(id -gn "$RUN_USER")"
-NODE_BIN="$(command -v node)"
-NPM_BIN="$(command -v npm)"
 
 # --- Colors ---
 RED='\033[0;31m'
@@ -29,20 +27,65 @@ echo "  tmux-api installer"
 echo "  ==================="
 echo ""
 
+# --- Resolve node/npm (nvm-aware) ---
+# sudo resets PATH, so node installed via nvm won't be found.
+# Check the invoking user's nvm installation as fallback.
+resolve_node() {
+  # 1. Already in PATH (system install or user passed PATH via sudo env PATH="$PATH")
+  if command -v node >/dev/null 2>&1; then
+    NODE_BIN="$(command -v node)"
+    NPM_BIN="$(command -v npm)"
+    return
+  fi
+
+  # 2. Check nvm for the invoking user
+  local nvm_dir="/home/${RUN_USER}/.nvm"
+  if [[ -d "$nvm_dir" ]]; then
+    # Find the default or latest installed version
+    local nvm_default=""
+    if [[ -f "$nvm_dir/alias/default" ]]; then
+      nvm_default="$(cat "$nvm_dir/alias/default")"
+    fi
+
+    local node_path=""
+    if [[ -n "$nvm_default" ]]; then
+      # Resolve alias — could be a version like "24" or full like "v24.14.1"
+      node_path="$(find "$nvm_dir/versions/node" -maxdepth 1 -type d -name "v${nvm_default}*" | sort -V | tail -1)"
+    fi
+
+    # Fallback: pick the latest installed version
+    if [[ -z "$node_path" || ! -x "$node_path/bin/node" ]]; then
+      node_path="$(find "$nvm_dir/versions/node" -maxdepth 1 -type d -name 'v*' | sort -V | tail -1)"
+    fi
+
+    if [[ -n "$node_path" && -x "$node_path/bin/node" ]]; then
+      NODE_BIN="$node_path/bin/node"
+      NPM_BIN="$node_path/bin/npm"
+      export PATH="$node_path/bin:$PATH"
+      warn "Node.js found via nvm: $NODE_BIN"
+      return
+    fi
+  fi
+
+  error "Node.js is not installed. Install Node.js 20+ first (system install or nvm)."
+}
+
+resolve_node
+
 # --- Check prerequisites ---
 echo "Checking prerequisites..."
 
-command -v node  >/dev/null 2>&1 || error "Node.js is not installed. Install Node.js 20+ first."
-command -v npm   >/dev/null 2>&1 || error "npm is not installed."
+[[ -x "$NODE_BIN" ]] || error "Node.js is not installed. Install Node.js 20+ first."
+[[ -x "$NPM_BIN" ]] || error "npm is not installed."
 command -v tmux  >/dev/null 2>&1 || error "tmux is not installed. Install with: sudo apt install tmux"
 
-NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
+NODE_VERSION=$("$NODE_BIN" -v | sed 's/v//' | cut -d. -f1)
 if [[ "$NODE_VERSION" -lt 20 ]]; then
-  error "Node.js 20+ required. Current: $(node -v)"
+  error "Node.js 20+ required. Current: $("$NODE_BIN" -v)"
 fi
 
-info "Node.js $(node -v)"
-info "npm $(npm -v)"
+info "Node.js $("$NODE_BIN" -v)"
+info "npm $("$NPM_BIN" -v)"
 info "tmux $(tmux -V)"
 
 # --- Install dependencies + build ---
@@ -90,6 +133,7 @@ ExecStart=${NODE_BIN} src/server/index.js
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
+Environment=PATH=$(dirname "$NODE_BIN"):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Security hardening
 NoNewPrivileges=true
