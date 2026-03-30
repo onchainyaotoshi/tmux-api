@@ -2,11 +2,9 @@
 
 [![npm](https://img.shields.io/npm/v/@yaotoshi/tmux-api)](https://www.npmjs.com/package/@yaotoshi/tmux-api)
 
-Self-hosted REST API server for controlling tmux remotely. Deploy the server on your machine, then use the [`@yaotoshi/tmux-api`](https://www.npmjs.com/package/@yaotoshi/tmux-api) SDK (or any HTTP client) to manage tmux sessions via API. The server runs on your infrastructure — the SDK connects to it via `baseUrl`.
+Self-hosted REST API server for controlling tmux remotely. Deploy the server on your machine, then use the [`@yaotoshi/tmux-api`](https://www.npmjs.com/package/@yaotoshi/tmux-api) SDK (or any HTTP client) to manage tmux sessions via API.
 
 ## Quick Start
-
-### Local (Production)
 
 Prerequisites: Node.js 20+, tmux (`apt install tmux`)
 
@@ -25,62 +23,21 @@ journalctl -u tmux-api -f           # follow logs
 sudo ./uninstall.sh                 # remove service
 ```
 
-### Local (Development)
+## Environment Variables
 
-Prerequisites: Node.js 20+, tmux (`apt install tmux`)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `API_KEY` | *(required)* | API key for authenticating requests to `/api/*` endpoints |
+| `PORT` | `9993` | Server port |
+| `SWAGGER_ENABLED` | `true` | Set to `"false"` to disable Scalar API docs at `/docs` |
+| `FRONTEND_ENABLED` | `true` | Set to `"false"` to disable serving the frontend SPA |
+| `RATE_LIMIT_MAX` | `100` | Max requests per minute per API key/token/IP. `0` to disable |
+| `AUTH_ACCOUNTS_URL` | *(empty)* | Accounts service URL for Bearer token auth. Leave empty for API key auth only |
 
-```bash
-git clone https://github.com/onchainyaotoshi/tmux-api.git
-cd tmux-api
-
-npm install
-cp .env.example .env   # edit API_KEY
-
-# Start server
-npm start
-
-# Or dev mode (auto-reload)
-npm run dev:server
-```
-
-### Docker
-
-```bash
-cp .env.example .env   # edit API_KEY
-docker compose up -d
-```
-
-> **How it works:** The Docker container only runs the tmux-api server. tmux sessions run on the **host**, not inside the container. The container connects to the host's tmux server via the Unix socket mounted at `/tmp`. This means any tools you need in tmux sessions (Claude Code, git, etc.) should be installed on the host, not in the container.
-
-Server runs at `http://127.0.0.1:9993` (localhost only). Port is configurable via `PORT` in `.env`.
-
-### Expose to the Internet
+## Expose to Internet
 
 ```bash
 cloudflared tunnel --url http://localhost:9993
-```
-
-## Usage Examples (curl)
-
-```bash
-API="http://localhost:9993"
-KEY="your-api-key"
-
-# Create a session
-curl -X POST $API/api/sessions \
-  -H "X-API-Key: $KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"worker-1"}'
-
-# Send command to pane
-curl -X POST $API/api/sessions/worker-1/windows/0/panes/0/send-keys \
-  -H "X-API-Key: $KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"keys":"echo hello"}'
-
-# Capture pane output
-curl -s $API/api/sessions/worker-1/windows/0/panes/0/capture \
-  -H "X-API-Key: $KEY" | jq .data.content
 ```
 
 ## API Reference
@@ -88,28 +45,6 @@ curl -s $API/api/sessions/worker-1/windows/0/panes/0/capture \
 Full API endpoints and SDK documentation: [`@yaotoshi/tmux-api` on npm](https://www.npmjs.com/package/@yaotoshi/tmux-api)
 
 Interactive API docs available at `http://localhost:9993/docs` (Scalar) after starting the server.
-
-## Learn tmux
-
-New to tmux? Check out the **[Tmux Tutorial](https://tmux-tutorial-5ww.pages.dev/)** — an interactive visual guide covering sessions, windows, panes, navigation, resize, and copy mode.
-
-## Use Cases
-
-Projects using tmux-api in production:
-
-- **[foreman](https://github.com/onchainyaotoshi/foreman)** — AI agent orchestrator that uses tmux-api as its backend for managing multiple AI agent sessions (blueprints, lifecycle, monitoring). Each agent runs in its own tmux session, controlled entirely via tmux-api endpoints.
-
-If you're using tmux-api in your project, feel free to open a PR to add it here!
-
-## Development
-
-```bash
-npm run dev:server    # Server with auto-reload
-npm run dev:frontend  # Vite dev server (frontend only)
-npm run build         # Build frontend
-npm test              # Run tests
-npm run test:watch    # Watch mode
-```
 
 ## Architecture
 
@@ -143,88 +78,17 @@ graph TB
     Routes --> Service
 ```
 
-### API Flow
+## Use Cases
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant F as tmux-api
-    participant T as tmux
+Projects using tmux-api in production:
 
-    C->>F: POST /api/sessions {name: "worker-1"}
-    F->>F: Validate API Key
-    F->>T: tmux new-session -d -s worker-1
-    T-->>F: OK
-    F-->>C: 201 {success: true, data: {name: "worker-1"}}
+- **[foreman](https://github.com/onchainyaotoshi/foreman)** — AI agent orchestrator that uses tmux-api as its backend for managing multiple AI agent sessions (blueprints, lifecycle, monitoring). Each agent runs in its own tmux session, controlled entirely via tmux-api endpoints.
 
-    C->>F: POST /api/.../panes/0/send-keys {keys: "claude --chat"}
-    F->>T: tmux send-keys -t worker-1:0.0 "claude --chat"
-    T-->>F: OK
-    F-->>C: 200 {success: true}
+If you're using tmux-api in your project, feel free to open a PR to add it here!
 
-    C->>F: GET /api/.../panes/0/capture
-    F->>T: tmux capture-pane -t worker-1:0.0 -p
-    T-->>F: pane content
-    F-->>C: 200 {success: true, data: {content: "..."}}
-```
+## Learn tmux
 
-### How It Works (Docker)
-
-```mermaid
-graph TB
-    subgraph Host["Host Machine"]
-        HostTmux["tmux ls → sees all sessions"]
-        TmpHost["/tmp/tmux-1000/default<br/>(tmux socket)"]
-
-        subgraph Container["Docker Container (node:20-alpine + tmux)"]
-            Fastify["Fastify :9993<br/>WORKDIR /app"]
-            TS["TerminalService"]
-            TmuxBin["tmux binary<br/>(apk add tmux)"]
-            TmpContainer["/tmp/tmux-1000/default"]
-
-            Fastify -->|"POST /api/sessions {name, cwd?}"| TS
-            TS -->|"execFile('tmux', ['new-session', ...])"| TmuxBin
-            TmuxBin --> TmpContainer
-        end
-
-        TmpContainer <-->|"volume mount<br/>/tmp:/tmp"| TmpHost
-        TmpHost --- HostTmux
-    end
-
-    Client["Client (SDK, curl)"] -->|"HTTP + X-API-Key"| Fastify
-```
-
-**Key points:**
-- tmux runs **inside the container** (installed via `apk add tmux`)
-- `/tmp:/tmp` volume mount shares the tmux socket — sessions created via API are visible on the host (`tmux ls`) and vice versa
-- Default working directory for new sessions is `/app` (container's WORKDIR). Pass `cwd` in the request body to override
-
-## Project Structure
-
-```
-tmux-api/
-├── src/
-│   ├── server/
-│   │   ├── index.js              # Fastify entry point
-│   │   ├── plugins/
-│   │   │   ├── auth.js           # API key + Bearer token auth
-│   │   │   └── swagger.js        # OpenAPI + Scalar docs
-│   │   ├── routes/
-│   │   │   ├── terminals.js      # Terminal endpoints (L1)
-│   │   │   ├── sessions.js       # Session endpoints (L2)
-│   │   │   ├── windows.js        # Window endpoints
-│   │   │   └── panes.js          # Pane + control endpoints
-│   │   └── services/
-│   │       ├── terminal.js       # TerminalService (L1, core)
-│   │       └── session.js        # SessionService (L2, stateless wrapper)
-│   ├── frontend/                  # React tutorial app
-│   └── index.css
-├── tests/                         # Vitest integration tests
-├── .env.example
-├── Dockerfile
-├── docker-compose.yml
-└── package.json
-```
+New to tmux? Check out the **[Tmux Tutorial](https://tmux-tutorial-5ww.pages.dev/)** — an interactive visual guide covering sessions, windows, panes, navigation, resize, and copy mode.
 
 ## License
 
