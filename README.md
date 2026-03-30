@@ -11,10 +11,11 @@ Prerequisites: Node.js 20+, tmux (`apt install tmux`)
 ```bash
 git clone https://github.com/onchainyaotoshi/tmux-api.git
 cd tmux-api
+cp .env.example .env   # edit API_KEY
 sudo ./install.sh
 ```
 
-This installs dependencies, builds the frontend, creates a systemd service, and starts tmux-api. Edit `.env` to set your `API_KEY` before or after install.
+This installs dependencies, builds the frontend, creates a systemd service, and starts tmux-api.
 
 ```bash
 sudo systemctl status tmux-api      # check status
