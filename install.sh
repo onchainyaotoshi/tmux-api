@@ -47,9 +47,14 @@ resolve_node() {
       nvm_default="$(cat "$nvm_dir/alias/default")"
     fi
 
+    # Resolve chained aliases (e.g. default -> lts/* -> 24)
+    while [[ -n "$nvm_default" && -f "$nvm_dir/alias/$nvm_default" ]]; do
+      nvm_default="$(cat "$nvm_dir/alias/$nvm_default")"
+    done
+
     local node_path=""
-    if [[ -n "$nvm_default" ]]; then
-      # Resolve alias — could be a version like "24" or full like "v24.14.1"
+    if [[ -n "$nvm_default" && "$nvm_default" != */* ]]; then
+      # Resolve version — could be "24" or "v24.14.1"
       node_path="$(find "$nvm_dir/versions/node" -maxdepth 1 -type d -name "v${nvm_default}*" | sort -V | tail -1)"
     fi
 
@@ -92,15 +97,15 @@ info "tmux $(tmux -V)"
 echo ""
 echo "Installing dependencies..."
 cd "$INSTALL_DIR"
-sudo -u "$RUN_USER" "$NPM_BIN" ci 2>&1 | tail -1
+sudo -u "$RUN_USER" --preserve-env=PATH "$NPM_BIN" ci 2>&1 | tail -1
 info "Dependencies installed"
 
 echo "Building frontend..."
-sudo -u "$RUN_USER" "$NPM_BIN" run build 2>&1 | tail -3
+sudo -u "$RUN_USER" --preserve-env=PATH "$NPM_BIN" run build 2>&1 | tail -3
 info "Frontend built"
 
 echo "Removing dev dependencies..."
-sudo -u "$RUN_USER" "$NPM_BIN" prune --omit=dev 2>&1 | tail -1
+sudo -u "$RUN_USER" --preserve-env=PATH "$NPM_BIN" prune --omit=dev 2>&1 | tail -1
 info "Dev dependencies removed"
 
 # --- Setup .env ---
